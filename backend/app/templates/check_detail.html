@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Проверка №{{ check.id }} — AdLaw{% endblock %}
+{% block content %}
+<div class="grid md:grid-cols-3 gap-4">
+  <section class="md:col-span-2 space-y-4">
+    <div class="card">
+      <div class="flex items-center justify-between">
+        <h1 class="text-xl font-semibold">Проверка №{{ check.id }}</h1>
+        <div class="text-sm text-slate-500">{{ check.created_at }}</div>
+      </div>
+      <div class="mt-3 text-sm whitespace-pre-wrap">{{ check.input_text }}</div>
+    </div>
+
+    {% include "partials/result.html" with context %}
+  </section>
+
+  <aside class="space-y-4">
+    <div class="card">
+      <h2 class="text-sm font-semibold mb-2">Действия</h2>
+      <div class="flex items-center gap-2">
+        <a class="btn" href="/api/report/{{ check.id }}">Скачать PDF-отчёт</a>
+        <button class="btn-secondary">Поделиться</button>
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,4 @@
+.venv
+.env
+.idea
+node_modules

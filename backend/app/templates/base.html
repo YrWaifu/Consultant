@@ -1,0 +1,32 @@
+﻿<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}AdLaw Moderator{% endblock %}</title>
+    <link href="/static/css/tailwind.css" rel="stylesheet" />
+    <script src="/static/js/htmx.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <header class="bg-white border-b">
+      <div class="container h-14 flex items-center justify-between">
+        <a href="/" class="font-semibold">AdLaw Moderator</a>
+        <nav class="text-sm flex items-center gap-6">
+          <a href="/" class="hover:text-brand-600">Проверка</a>
+          <a href="/history" class="hover:text-brand-600">История</a>
+          <a href="/laws" class="hover:text-brand-600">База законов</a>
+          <a href="/account" class="hover:text-brand-600">Аккаунт</a>
+        </nav>
+      </div>
+    </header>
+    <main class="container py-4">
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="py-8 text-center text-xs text-slate-500">
+      © {{ 2025 }} AdLaw. Это прототип.
+    </footer>
+  </body>
+</html>
