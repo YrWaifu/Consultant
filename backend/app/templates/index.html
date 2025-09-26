@@ -5,11 +5,43 @@
   <section class="md:col-span-2 space-y-4">
     <div class="card">
       <h1 class="text-xl font-semibold mb-3">Проверка рекламы</h1>
-      <form hx-post="/api/checks/" hx-trigger="submit" hx-target="#result" hx-swap="innerHTML"
-            enctype="multipart/form-data" hx-encoding="multipart/form-data" class="space-y-3">
-        <textarea name="text" class="input" rows="7" placeholder="Введите текст рекламы..."></textarea>
+
+      <form
+        hx-post="/api/checks/"
+        hx-trigger="submit"
+        hx-target="#result"
+        hx-swap="innerHTML"
+        enctype="multipart/form-data"
+        hx-encoding="multipart/form-data"
+        class="space-y-3"
+      >
+        <textarea
+          name="text"
+          class="input"
+          rows="7"
+          placeholder="Введите текст рекламы..."
+        ></textarea>
+
         <div class="flex items-center justify-between gap-3">
           <input type="file" name="media" class="text-sm" />
+        </div>
+
+        {# чек-лист перед кнопками #}
+        {% set checklist = [
+          "Используется сравнение с конкурентами",
+          "Есть обещание результата",
+          "Присутствуют возрастные ограничения",
+          "Указаны медицинские утверждения",
+          "Есть акции/скидки/условия"
+        ] %}
+        {% with items=checklist %}
+          {% include "partials/checklist.html" %}
+        {% endwith %}
+
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-xs text-slate-500">
+            Текст и изображение не сохраняются без вашего согласия
+          </span>
           <div class="flex items-center gap-2">
             <button class="btn" type="submit">Проверить</button>
             <button class="btn-secondary" type="reset">Сбросить</button>
@@ -32,7 +64,9 @@
     </div>
     <div class="card">
       <h2 class="text-sm font-semibold mb-2">Шаблон маркировки</h2>
-      <div class="text-xs text-slate-600">«Имеются противопоказания. Необходима консультация специалиста»</div>
+      <div class="text-xs text-slate-600">
+        «Имеются противопоказания. Необходима консультация специалиста»
+      </div>
     </div>
   </aside>
 </div>

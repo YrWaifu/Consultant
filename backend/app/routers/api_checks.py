@@ -6,11 +6,23 @@ from ..services.ml_core import run_ml
 router = APIRouter()
 
 @router.post("/", response_class=HTMLResponse)
-async def create_check_htmx(request: Request, text: str = Form(None)):
-    issues = rule_based_check(text or "")
+async def create_check_full(request: Request, text: str = Form(None)):
+    issues_rb = rule_based_check(text or "")
     ml = run_ml(text, None)
-    result = {"issues": issues, "ml": ml}
+
+    # Собираем карточки под макет
+    issues = []
+    for it in issues_rb:
+        issues.append({
+            "title": "Несоответствие ФЗ «О рекламе»" if it["code"].startswith("claim") else it.get("title", "Нарушение"),
+            "text": "В соответствии с нормами ФЗ «О рекламе» запрещены превосходные формулировки без подтверждения.",
+            "fix": it.get("fix", "Смягчить формулировку или указать критерии/источник оценки")
+        })
+
+    # Заглушка процента соответствия (65 как в макете)
+    percent = 65
+
     return request.app.state.templates.TemplateResponse(
-        "partials/result.html",
-        {"request": request, "summary": "Найдены потенциальные несоответствия" if issues else "Чисто", "result": result},
+        "result_full.html",
+        {"request": request, "issues": issues or [{"title":"Название менее серьёзного нарушения","text":"Описание","fix":"Обобщённые рекомендации"}], "percent": percent, "check_id": 0},
     )

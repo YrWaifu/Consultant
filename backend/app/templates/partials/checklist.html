@@ -1,0 +1,13 @@
+<div class="space-y-1">
+  <label class="text-sm font-medium">Отметьте верные утверждения о вашей рекламе</label>
+  <div class="border border-brand-700 rounded-md">
+    {% for item in items %}
+      <div class="check-item" role="group">
+        <div class="py-2 text-sm text-slate-800">{{ item }}</div>
+        <label class="check-wrap">
+          <input class="check" type="checkbox" name="facts" value="{{ loop.index }}">
+        </label>
+      </div>
+    {% endfor %}
+  </div>
+</div>

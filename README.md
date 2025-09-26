@@ -1,5 +1,7 @@
 ### Запуск
 cp .env.example .env
+npm i
+npm run tw:build
 make up # или docker compose up --build
 
 

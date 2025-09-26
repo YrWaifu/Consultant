@@ -31,3 +31,17 @@ async def check_detail(request: Request, check_id: int):
         ]}
     }
     return request.app.state.templates.TemplateResponse("check_detail.html", ctx)
+
+@router.get("/result-demo", response_class=HTMLResponse)
+async def result_demo(request: Request):
+    ctx = {
+        "request": request,
+        "issues": [
+            {"title": "Несоответствие ФЗ «О рекламе»", "text": "Запрещены слова «лучший», «самый», «абсолютный» без доказательств", "fix": "Добавьте критерии оценки или уберите превосходные формы"},
+            {"title": "Название менее серьёзного нарушения", "text": "Описание нарушения", "fix": "Обобщённые рекомендации"},
+            {"title": "Название несерьёзного нарушения", "text": "Описание нарушения", "fix": "Обобщённые рекомендации"}
+        ],
+        "percent": 65,
+        "check_id": 1
+    }
+    return request.app.state.templates.TemplateResponse("result_full.html", ctx)
