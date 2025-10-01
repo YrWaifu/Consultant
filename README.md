@@ -1,8 +1,9 @@
 ### Запуск
 cp .env.example .env
-npm i
-npm run tw:build
-make up # или docker compose up --build
+npm install
+npm i -D @tailwindcss/cli
+npm run tw:dev или npm run tw:build
+docker compose up --build
 
 
 ### Точки входа
@@ -11,8 +12,7 @@ make up # или docker compose up --build
 - GET /history — история проверок (позже)
 - POST /api/search/ — поиск по базе знаний (laws.json)
 
-
-### Где менять логику
-- `services/rules.py` — регулярки/правила
-- `ml/` — модели и пайплайны
-- `services/reporting.py` — экспорт PDF/HTML
+### Как посмотреть варианты отчетов
+- Плохая: http://localhost:8000/v2/report?case=bad
+- Средняя: http://localhost:8000/v2/report?case=medium
+- Идеальная: http://localhost:8000/v2/report?case=good

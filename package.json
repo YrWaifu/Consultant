@@ -1,11 +1,10 @@
 {
-  "name": "adlaw-moderator",
-  "private": true,
   "scripts": {
-    "tw:build": "tailwindcss -i backend/app/static/css/tw-input.css -o backend/app/static/css/tailwind.css --minify",
-    "tw:watch": "tailwindcss -i backend/app/static/css/tw-input.css -o backend/app/static/css/tailwind.css --watch"
+    "tw:dev": "tailwindcss -i ./backend/app/static/css/app.css -o ./backend/app/static/css/build.css --watch",
+    "tw:build": "tailwindcss -i ./backend/app/static/css/app.css -o ./backend/app/static/css/build.css --minify"
   },
   "devDependencies": {
-    "tailwindcss": "3.4.10"
+    "@tailwindcss/cli": "^4.1.13",
+    "tailwindcss": "^3.4.13"
   }
 }

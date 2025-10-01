@@ -1,0 +1,78 @@
+{% extends "layouts/base_v2.html" %}
+{% set active = "check" %}
+{% block title %}Отчёт о проверке — ИИ модератор рекламы{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('web_v2_check') }}"
+    class="inline-flex items-center gap-2 text-neutral-700 hover:text-neutral-900 mb-4">
+    ← Назад
+</a>
+
+<p class="text-sm text-neutral-600 mb-4">
+    Результаты проверки носят <span class="text-rose-600 font-medium">рекомендательный характер</span>
+</p>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+    <!-- Кольцо -->
+    <div class="flex flex-col items-center md:items-start">
+        <div class="text-sm text-neutral-600 mb-2">Соответствие законодательству</div>
+        {% include 'components/score_ring.html' %}
+    </div>
+
+    <!-- Краткие выводы -->
+    <ul class="space-y-3">
+        {% for f in flags %}
+        <li class="flex items-start gap-3">
+            {% if f.type == 'ok' %}
+            <span class="mt-1 text-emerald-600">✔</span>
+            {% elif f.type == 'warn' %}
+            <span class="mt-1 text-amber-600">⚑</span>
+            {% else %}
+            <span class="mt-1 text-rose-600">⚑</span>
+            {% endif %}
+            <span class="{{ 'text-neutral-800' if f.strong else 'text-neutral-700' }}">{{ f.text }}</span>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+{% if violations|length %}
+<h2 class="text-xl font-semibold mt-10 mb-4">Основные нарушения из Федерального закона «О рекламе»</h2>
+<div class="space-y-5">
+    {% for v in violations %}
+    {% include 'components/violation_card.html' %}
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if cases|length %}
+<h2 class="text-xl font-semibold mt-10 mb-4">Похожие случаи из судебной практики</h2>
+<div class="space-y-5">
+    {% for c in cases %}
+    <article class="rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4">
+        <h3 class="font-semibold mb-1">{{ c.title }}</h3>
+        <p class="text-sm text-neutral-700 mb-2">{{ c.text }}</p>
+        <div class="text-sm">
+            <div class="font-medium mb-1">Рекомендация по исправлению</div>
+            <p class="text-neutral-700">{{ c.fix }}</p>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if footer_note %}
+<p class="text-sm text-neutral-600 mt-8">{{ footer_note|safe }}</p>
+{% endif %}
+
+<div class="text-center mt-6">
+    <a href="#"
+        class="inline-flex items-center justify-center rounded-full bg-rose-600 px-8 py-3 text-white text-lg hover:bg-rose-700">
+        Скачать PDF-отчёт
+    </a>
+</div>
+
+<p class="text-center text-neutral-700 mt-4">
+    Отчёт сохранён в <a href="#" class="text-rose-600 underline">Истории проверок</a>
+</p>
+{% endblock %}

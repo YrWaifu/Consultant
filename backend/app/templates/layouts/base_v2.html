@@ -1,0 +1,25 @@
+{% set active = active or "" %}
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}ИИ модератор рекламы{% endblock %}</title>
+    <!-- временно, только чтобы проверить -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+
+    <link href="{{ url_for('static', path='css/build.css') }}" rel="stylesheet">
+</head>
+
+<body class="bg-neutral-50 text-neutral-900">
+    <header class="bg-white border-b border-neutral-200">
+        {% include 'components/header.html' %}
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+
+</html>

@@ -1,0 +1,47 @@
+{% extends "layouts/base_v2.html" %}
+{% set active = "laws" %}
+{% block title %}{{ article.heading }} — ФЗ «О рекламе»{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('web_v2_laws') }}"
+    class="inline-flex items-center gap-2 text-neutral-700 hover:text-neutral-900 mb-4">←</a>
+
+<h1 class="text-center text-2xl font-semibold">
+    {{ title }}<br><span class="text-neutral-600 text-xl">{{ meta }}</span>
+</h1>
+
+<div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Текст статьи -->
+    <article class="lg:col-span-2 rounded-2xl border border-rose-400 bg-white p-5">
+        <h2 class="text-rose-700 text-xl font-semibold mb-3">{{ article.heading }}</h2>
+
+        <div class="space-y-4 text-neutral-800 leading-relaxed">
+            {% for p in article.paragraphs %}
+            <p>{{ p }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="mt-6 flex justify-between text-sm text-neutral-700">
+            <div>
+                {% if article.prev_id %}
+                <a class="hover:underline" href="{{ url_for('web_v2_law_article', article_id=article.prev_id) }}">←
+                    Предыдущая статья</a>
+                {% endif %}
+            </div>
+            <div>
+                {% if article.next_id %}
+                <a class="hover:underline"
+                    href="{{ url_for('web_v2_law_article', article_id=article.next_id) }}">Следующая статья →</a>
+                {% endif %}
+            </div>
+        </div>
+    </article>
+
+    <!-- Оглавление справа, прилипающее при прокрутке -->
+    <div class="lg:col-span-1">
+        <div class="lg:sticky lg:top-6">
+            {% include 'components/law_toc.html' with context %}
+        </div>
+    </div>
+</div>
+{% endblock %}

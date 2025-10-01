@@ -1,0 +1,93 @@
+{% extends "layouts/base_v2.html" %}
+{% set active = "check" %}
+{% block title %}Проверка рекламы — ИИ модератор рекламы{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <p class="text-sm text-neutral-500 mb-4">
+        Можете ввести слоган, текст, сценарий для видео или описать рекламу своими словами
+    </p>
+
+    <form action="{{ url_for('web_v2_check_submit') }}" method="post" enctype="multipart/form-data" class="space-y-8">
+
+        <!-- Текст -->
+        <label class="block">
+            <span class="sr-only">Введите текст рекламы</span>
+            <textarea name="text" rows="7" placeholder="Введите текст рекламы..."
+                class="w-full rounded-2xl border border-neutral-300 bg-white p-4 outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400"></textarea>
+        </label>
+
+        <!-- Разделитель -->
+        <div class="text-center text-neutral-500">ИЛИ</div>
+
+        <!-- Дропзона -->
+        <div id="dropzone" class="rounded-2xl border-2 border-neutral-300 border-dashed bg-white p-10 text-center text-neutral-500 transition
+                  hover:border-rose-300" data-default="Загрузите фото, аудио или видео">
+            <input id="fileinput" name="file" type="file" class="hidden">
+            <div class="pointer-events-none select-none">
+                <div class="text-2xl mb-2">⇪</div>
+                <div id="dztext">Загрузите фото, аудио или видео</div>
+            </div>
+            <button type="button" id="dzbutton"
+                class="mt-4 rounded-full border border-neutral-300 px-4 py-1 text-sm hover:bg-neutral-50">
+                Выбрать файл
+            </button>
+        </div>
+
+        <!-- Чекбоксы -->
+        <div>
+            <p class="text-center font-medium mb-4">Отметьте верные утверждения о вашей рекламе</p>
+            <ul class="space-y-3">
+                {% for i in range(1,6) %}
+                <li class="flex items-start justify-between gap-4">
+                    <span class="text-neutral-800">Утверждение для проверки {{ i }}</span>
+                    <input type="checkbox" name="claims" value="claim_{{ i }}" class="w-5 h-5 accent-rose-600">
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Кнопка -->
+        <div class="text-center">
+            <button type="submit"
+                class="inline-flex items-center justify-center rounded-full bg-rose-600 px-8 py-3 text-white text-lg hover:bg-rose-700">
+                Проверить
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Мини-JS для drag&drop -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const dz = document.getElementById('dropzone');
+        const fi = document.getElementById('fileinput');
+        const txt = document.getElementById('dztext');
+        const btn = document.getElementById('dzbutton');
+        const def = dz.getAttribute('data-default') || 'Загрузите файл';
+
+        const showName = files => {
+            if (!files || !files.length) { txt.textContent = def; return; }
+            txt.textContent = files.length === 1 ? files[0].name : [...files].map(f => f.name).join(', ');
+        };
+
+        btn.addEventListener('click', () => fi.click());
+        dz.addEventListener('click', e => {
+            if (e.target === dz) fi.click();
+        });
+
+        fi.addEventListener('change', e => showName(e.target.files));
+
+        dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('border-rose-300'); });
+        dz.addEventListener('dragleave', () => dz.classList.remove('border-rose-300'));
+        dz.addEventListener('drop', e => {
+            e.preventDefault();
+            dz.classList.remove('border-rose-300');
+            if (e.dataTransfer.files?.length) {
+                fi.files = e.dataTransfer.files;
+                showName(fi.files);
+            }
+        });
+    });
+</script>
+{% endblock %}

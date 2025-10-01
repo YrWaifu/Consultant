@@ -1,0 +1,7 @@
+{# expects: percent (int 0..100), ring_color (hex), ring_deg (float 0..360) #}
+<div class="relative inline-flex items-center justify-center" style="width: 148px; height: 148px;
+            background: conic-gradient({{ ring_color }} {{ ring_deg }}deg, #e5e7eb 0deg);
+            border-radius: 9999px;">
+    <div class="absolute inset-3 bg-white rounded-full shadow-inner"></div>
+    <div class="relative text-2xl font-bold" style="color: {{ ring_color }};">{{ percent }}%</div>
+</div>

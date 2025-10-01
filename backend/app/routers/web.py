@@ -1,47 +1,66 @@
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Request, Form, UploadFile, File
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+
+from ..services.news_stub import list_news
+from ..services.report_stub import make_report
+from ..services.laws_stub import get_law_index, get_article
 
 router = APIRouter()
+templates = Jinja2Templates(directory="backend/app/templates")
 
-@router.get("/", response_class=HTMLResponse)
-async def index(request: Request):
-    return request.app.state.templates.TemplateResponse("index.html", {"request": request})
 
-@router.get("/history", response_class=HTMLResponse)
-async def history(request: Request):
-    return request.app.state.templates.TemplateResponse("history.html", {"request": request})
+@router.get("/v2/news", response_class=HTMLResponse, name="web_v2_news")
+async def news_page(request: Request, q: str | None = None):
+    items = list_news(q)
+    return templates.TemplateResponse(
+        "pages/news_list_v2.html",
+        {"request": request, "items": items}
+    )
 
-@router.get("/laws", response_class=HTMLResponse)
-async def laws(request: Request):
-    return request.app.state.templates.TemplateResponse("laws.html", {"request": request})
 
-@router.get("/account", response_class=HTMLResponse)
-async def account(request: Request):
-    return request.app.state.templates.TemplateResponse("account.html", {"request": request, "user": {"email": None}})
+@router.get("/v2/check", response_class=HTMLResponse, name="web_v2_check")
+async def check_page(request: Request):
+    return templates.TemplateResponse("pages/check_v2.html", {"request": request})
 
-@router.get("/check/{check_id}", response_class=HTMLResponse)
-async def check_detail(request: Request, check_id: int):
-    # рыба данных, дальше возьмешь из БД
-    ctx = {
-        "request": request,
-        "check": {"id": check_id, "created_at": "2025-09-26 14:45", "input_text": "самый лучший товар..."},
-        "summary": "Найдены потенциальные несоответствия",
-        "result": {"issues": [
-            {"title": "Запрещенные превосходные формулировки", "level": "medium", "fix": "Уберите превосходную форму"}
-        ]}
-    }
-    return request.app.state.templates.TemplateResponse("check_detail.html", ctx)
 
-@router.get("/result-demo", response_class=HTMLResponse)
-async def result_demo(request: Request):
-    ctx = {
-        "request": request,
-        "issues": [
-            {"title": "Несоответствие ФЗ «О рекламе»", "text": "Запрещены слова «лучший», «самый», «абсолютный» без доказательств", "fix": "Добавьте критерии оценки или уберите превосходные формы"},
-            {"title": "Название менее серьёзного нарушения", "text": "Описание нарушения", "fix": "Обобщённые рекомендации"},
-            {"title": "Название несерьёзного нарушения", "text": "Описание нарушения", "fix": "Обобщённые рекомендации"}
-        ],
-        "percent": 65,
-        "check_id": 1
-    }
-    return request.app.state.templates.TemplateResponse("result_full.html", ctx)
+@router.post("/v2/check", response_class=HTMLResponse, name="web_v2_check_submit")
+async def check_submit(
+    request: Request,
+    text: str | None = Form(None),
+    claims: list[str] | None = Form(None),
+    file: UploadFile | None = File(None),
+):
+    # временно всегда ведём в «плохой» отчёт
+    url = request.url_for("web_v2_report").include_query_params(case="bad")
+    return RedirectResponse(url, status_code=303)
+
+
+@router.get("/v2/report", response_class=HTMLResponse, name="web_v2_report")
+async def report_page(request: Request, case: str | None = None):
+    data = make_report(case or "bad")
+    return templates.TemplateResponse(
+        "pages/check_report_v2.html",
+        {"request": request, **data}
+    )
+
+
+@router.get("/v2/account", response_class=HTMLResponse, name="web_v2_account")
+async def account_page(request: Request):
+    return templates.TemplateResponse("pages/account_v2.html", {"request": request})
+
+@router.get("/v2/laws", response_class=HTMLResponse, name="web_v2_laws")
+async def laws_index(request: Request):
+    data = get_law_index()
+    return templates.TemplateResponse(
+        "pages/laws_index_v2.html",
+        {"request": request, **data}
+    )
+
+@router.get("/v2/laws/article/{article_id}", response_class=HTMLResponse, name="web_v2_law_article")
+async def laws_article(request: Request, article_id: str):
+    data = get_article(article_id)
+    return templates.TemplateResponse(
+        "pages/laws_detail_v2.html",
+        {"request": request, **data}
+    )
