@@ -2,15 +2,14 @@
 {% set active = None %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-    <div class="grid grid-cols-12 gap-8">
+<div class="grid grid-cols-12 gap-8 items-start">
         <!-- Левое меню -->
-        <div class="col-span-12 md:col-span-3">
+        <div class="col-span-12 md:col-span-4">
             {% include "components/account_tabs.html" with context %}
         </div>
 
         <!-- Контент -->
-        <div class="col-span-12 md:col-span-9">
+        <div class="col-span-12 md:col-span-8">
             <div class="bg-white rounded-2xl p-6 shadow-sm ring-1 ring-neutral-200/70">
                 {% if not sub %}
                 <h1 class="text-2xl font-semibold mb-4">Подписка</h1>
@@ -69,5 +68,4 @@
             </div>
         </div>
     </div>
-</div>
 {% endblock %}
