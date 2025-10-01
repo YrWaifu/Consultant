@@ -7,7 +7,7 @@ npm run tw:dev или npm run tw:build
 docker compose up --build
 ```
 
-## Если `npm i -D @tailwindcss/cli` не работает
+### Если `npm i -D @tailwindcss/cli` не работает
 ```bash
 npm cache clean --force  
 ```
