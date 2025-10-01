@@ -1,0 +1,48 @@
+{% extends "layouts/base_v2.html" %}
+{% set active = None %}
+
+{% block content %}
+<div class="grid grid-cols-12 gap-8 items-start">
+        <!-- Левое меню -->
+        <div class="col-span-12 md:col-span-4">
+            {% include "components/account_tabs.html" with context %}
+        </div>
+
+        <!-- Контент -->
+        <div class="col-span-12 md:col-span-8">
+            <div class="bg-white rounded-2xl p-6 shadow-sm ring-1 ring-neutral-200/70">
+                <h1 class="text-2xl font-semibold mb-4">Общая статистика</h1>
+
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <div class="rounded-xl border border-neutral-200 p-4">
+                        <div class="text-neutral-500 text-sm">Всего проверок</div>
+                        <div class="mt-1 text-xl font-semibold">{{ stats.total_checks }}</div>
+                    </div>
+                    <div class="rounded-xl border border-neutral-200 p-4">
+                        <div class="text-neutral-500 text-sm">Без нарушений</div>
+                        <div class="mt-1 text-xl font-semibold">{{ stats.ok }}</div>
+                    </div>
+                    <div class="rounded-xl border border-neutral-200 p-4">
+                        <div class="text-neutral-500 text-sm">С предупреждениями</div>
+                        <div class="mt-1 text-xl font-semibold">{{ stats.warn }}</div>
+                    </div>
+                    <div class="rounded-xl border border-neutral-200 p-4">
+                        <div class="text-neutral-500 text-sm">С нарушениями</div>
+                        <div class="mt-1 text-xl font-semibold">{{ stats.bad }}</div>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <div class="text-neutral-500 text-sm">Последние 30 дней</div>
+                    <div class="mt-2 h-24 rounded-xl bg-neutral-100 flex items-end gap-1 p-2">
+                        {% for v in stats.last30 %}
+                        <div class="flex-1 bg-rose-300 rounded-sm" style="height: {{ v }}%"></div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+

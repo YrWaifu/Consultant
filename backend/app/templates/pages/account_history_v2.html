@@ -1,0 +1,46 @@
+{% extends "layouts/base_v2.html" %}
+{% set active = None %}
+
+{% block content %}
+<div class="grid grid-cols-12 gap-8 items-start">
+        <!-- Левое меню -->
+        <div class="col-span-12 md:col-span-4">
+            {% include "components/account_tabs.html" with context %}
+        </div>
+
+        <!-- Контент -->
+        <div class="col-span-12 md:col-span-8">
+            <div class="bg-white rounded-2xl p-6 shadow-sm ring-1 ring-neutral-200/70">
+                <h1 class="text-2xl font-semibold mb-4">История проверок</h1>
+
+                {% if not items %}
+                <div class="text-neutral-600">Пока нет проверок. Выполните первую проверку на странице «Проверка рекламы».</div>
+                {% else %}
+                <div class="space-y-3">
+                    {% for it in items %}
+                    <div class="rounded-xl border border-neutral-200 p-4 flex items-start justify-between gap-4">
+                        <div>
+                            <div class="text-sm text-neutral-500">{{ it.date }}</div>
+                            <div class="mt-1 font-medium">{{ it.title }}</div>
+                            {% if it.summary %}
+                            <div class="text-neutral-600">{{ it.summary }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm {{ it.badge_class }}">
+                                {{ it.badge_text }}
+                            </span>
+                            {% if it.pdf_url %}
+                            <a href="{{ it.pdf_url }}" class="px-3 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200">Скачать PDF</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+

@@ -22,12 +22,14 @@
             class="block rounded-xl px-3 py-2 {{ 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' if tab=='subscription' else 'hover:bg-neutral-50' }}">
             <span class="inline-flex items-center gap-2">🖊️ Подписка</span>
         </a>
-        <span class="block rounded-xl px-3 py-2 cursor-not-allowed text-neutral-400">
+        <a href="{{ url_for('web_v2_account_history') }}"
+           class="block rounded-xl px-3 py-2 {{ 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' if tab=='history' else 'hover:bg-neutral-50' }}">
             <span class="inline-flex items-center gap-2"><span>🗂️</span> История проверок</span>
-        </span>
-        <span class="block rounded-xl px-3 py-2 cursor-not-allowed text-neutral-400">
+        </a>
+        <a href="{{ url_for('web_v2_account_stats') }}"
+           class="block rounded-xl px-3 py-2 {{ 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' if tab=='stats' else 'hover:bg-neutral-50' }}">
             <span class="inline-flex items-center gap-2"><span>⏱️</span> Общая статистика</span>
-        </span>
+        </a>
 
         {# Выход — такой же пункт, без прижатия вниз #}
         <a href="#" class="block rounded-xl px-3 py-2 hover:bg-neutral-50 text-neutral-600">

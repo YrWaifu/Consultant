@@ -1,14 +1,16 @@
 from fastapi import APIRouter, Request, Form, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from ..services.news_stub import list_news
-from ..services.report_stub import make_report
+from ..services.report_stub import make_report, make_report_pdf_bytes
 from ..services.laws_stub import get_law_index, get_article
 from ..services.account_stub import (
     get_account, update_account,
     get_subscription, start_subscription, cancel_subscription,
 )
+from ..services.history_stub import list_history
+from ..services.stats_stub import get_stats
 
 router = APIRouter()
 templates = Jinja2Templates(directory="backend/app/templates")
@@ -47,6 +49,16 @@ async def report_page(request: Request, case: str | None = None):
         "pages/check_report_v2.html",
         {"request": request, **data}
     )
+
+
+@router.get("/v2/report.pdf", name="web_v2_report_pdf")
+async def report_pdf_download(case: str | None = None):
+    pdf_bytes = make_report_pdf_bytes(case or "bad")
+    headers = {
+        "Content-Disposition": "attachment; filename=report.pdf",
+        "Content-Type": "application/pdf",
+    }
+    return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
 
 
 @router.get("/v2/account", response_class=HTMLResponse, name="web_v2_account")
@@ -104,6 +116,26 @@ async def subscribe_start(request: Request):
     start_subscription()  # включаем заглушку
     url = str(request.url_for("web_v2_account_subscription")) + "?state=active"
     return RedirectResponse(url=url, status_code=303)
+
+
+@router.get("/v2/account/history", response_class=HTMLResponse, name="web_v2_account_history")
+async def account_history(request: Request):
+    account = get_account()
+    items = list_history()
+    return templates.TemplateResponse(
+        "pages/account_history_v2.html",
+        {"request": request, "tab": "history", "account": account, "items": items},
+    )
+
+
+@router.get("/v2/account/stats", response_class=HTMLResponse, name="web_v2_account_stats")
+async def account_stats(request: Request):
+    account = get_account()
+    stats = get_stats()
+    return templates.TemplateResponse(
+        "pages/account_stats_v2.html",
+        {"request": request, "tab": "stats", "account": account, "stats": stats},
+    )
 
 @router.post("/v2/account/subscription/cancel", name="web_v2_subscribe_cancel")
 async def subscribe_cancel_route(request: Request):

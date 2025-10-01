@@ -110,3 +110,27 @@ def make_report(case: str = "bad") -> dict:
         "cases": cases,
         "footer_note": footer,
     }
+
+
+def make_report_pdf_bytes(case: str = "bad") -> bytes:
+    """
+    Генерирует простой PDF-заглушку в байтах для скачивания.
+    Чтобы не тянуть зависимости, создаём минимальный PDF руками.
+    """
+    title = f"Отчёт по проверке — {case.upper()}"
+    # Простейший одностраничный PDF (A4), текст в центре.
+    # Источник структуры: минимальный синтетический PDF без внешних пакетов.
+    content_text = f"BT /F1 24 Tf 100 700 Td ({title}) Tj ET"
+    pdf = (
+        b"%PDF-1.4\n"
+        b"1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n"
+        b"2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n"
+        b"3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj\n"
+        + f"4 0 obj << /Length {len(content_text)} >> stream\n".encode("utf-8") + content_text.encode("utf-8") + b"\nendstream endobj\n"
+        b"5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n"
+        b"xref\n0 6\n0000000000 65535 f \n"
+        b"trailer << /Size 6 /Root 1 0 R >>\nstartxref\n"
+    )
+    startxref = len(pdf)
+    pdf += str(startxref).encode("ascii") + b"\n%%EOF"
+    return pdf
