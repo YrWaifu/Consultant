@@ -5,6 +5,10 @@ from fastapi.templating import Jinja2Templates
 from ..services.news_stub import list_news
 from ..services.report_stub import make_report
 from ..services.laws_stub import get_law_index, get_article
+from ..services.account_stub import (
+    get_account, update_account,
+    get_subscription, start_subscription, cancel_subscription,
+)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="backend/app/templates")
@@ -47,7 +51,28 @@ async def report_page(request: Request, case: str | None = None):
 
 @router.get("/v2/account", response_class=HTMLResponse, name="web_v2_account")
 async def account_page(request: Request):
-    return templates.TemplateResponse("pages/account_v2.html", {"request": request})
+    data = get_account()
+    return templates.TemplateResponse(
+        "pages/account_profile_v2.html",
+        {"request": request, "active": "account", "tab": "profile", "account": data},
+    )
+
+@router.post("/v2/account", response_class=HTMLResponse, name="web_v2_account_submit")
+async def account_submit(
+    request: Request,
+    last_name: str = Form(""),
+    first_name: str = Form(""),
+    email: str = Form(""),
+    avatar: UploadFile | None = File(None),
+):
+    # файл никуда не сохраняем — просто делаем вид, что у нас есть url
+    avatar_url = None
+    if avatar and avatar.filename:
+        avatar_url = f"/static/img/avatars/{avatar.filename}"
+    update_account(
+        {"last_name": last_name, "first_name": first_name, "email": email, "avatar_url": avatar_url}
+    )
+    return RedirectResponse(request.url_for("web_v2_account"), status_code=303)
 
 @router.get("/v2/laws", response_class=HTMLResponse, name="web_v2_laws")
 async def laws_index(request: Request):
@@ -64,3 +89,24 @@ async def laws_article(request: Request, article_id: str):
         "pages/laws_detail_v2.html",
         {"request": request, **data}
     )
+
+@router.get("/v2/account/subscription", response_class=HTMLResponse, name="web_v2_account_subscription")
+def account_subscription(request: Request, state: str = "none"):
+    account = get_account()
+    sub = get_subscription() if state != "none" else None
+    return templates.TemplateResponse(
+        "pages/account_subscription_v2.html",
+        {"request": request, "tab": "subscription", "account": account, "sub": sub},
+    )
+
+@router.post("/v2/account/subscription/subscribe", name="web_v2_subscribe_start")
+async def subscribe_start(request: Request):
+    start_subscription()  # включаем заглушку
+    url = str(request.url_for("web_v2_account_subscription")) + "?state=active"
+    return RedirectResponse(url=url, status_code=303)
+
+@router.post("/v2/account/subscription/cancel", name="web_v2_subscribe_cancel")
+async def subscribe_cancel_route(request: Request):
+    cancel_subscription()
+    url = str(request.url_for("web_v2_account_subscription")) + "?state=none"
+    return RedirectResponse(url=url, status_code=303)

@@ -1,0 +1,73 @@
+{% extends "layouts/base_v2.html" %}
+{% set active = None %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div class="grid grid-cols-12 gap-8">
+        <!-- Левое меню -->
+        <div class="col-span-12 md:col-span-3">
+            {% include "components/account_tabs.html" with context %}
+        </div>
+
+        <!-- Контент -->
+        <div class="col-span-12 md:col-span-9">
+            <div class="bg-white rounded-2xl p-6 shadow-sm ring-1 ring-neutral-200/70">
+                {% if not sub %}
+                <h1 class="text-2xl font-semibold mb-4">Подписка</h1>
+                <p class="text-neutral-700 max-w-2xl">
+                    Оформите подписку, чтобы <b>сохранять историю проверок</b>,
+                    получать <b>доступ к статистике</b> и иметь <b>приоритет</b> при модерации рекламы.
+                </p>
+
+                <form method="post" action="{{ url_for('web_v2_subscribe_start') }}" class="mt-6">
+                    <button
+                        class="inline-flex items-center px-5 py-2.5 rounded-xl bg-rose-500 text-white hover:bg-rose-600">
+                        Оформить
+                    </button>
+                </form>
+                {% else %}
+                <div class="flex items-start justify-between flex-wrap gap-4">
+                    <div>
+                        <h1 class="text-2xl font-semibold">Подписка активна</h1>
+                        <div class="mt-1 text-neutral-600">
+                            Тариф: <b>{{ sub.plan }}</b> · Стоимость: {{ sub.price }}
+                        </div>
+                        <div class="text-neutral-600">
+                            Следующее списание: <b>{{ sub.renews_at }}</b>
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm">
+                        ● Активна
+                    </span>
+                </div>
+
+                <div class="mt-6 grid sm:grid-cols-2 gap-4">
+                    <div class="rounded-xl border border-neutral-200 p-4">
+                        <div class="text-neutral-500 text-sm">Лимит проверок в месяц</div>
+                        <div class="mt-1 text-xl font-semibold">
+                            {{ sub.used }} / {{ sub.quota_month }}
+                        </div>
+                    </div>
+                    <div class="rounded-xl border border-neutral-200 p-4">
+                        <div class="text-neutral-500 text-sm">Приоритет очереди</div>
+                        <div class="mt-1 text-xl font-semibold">Высокий</div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex flex-wrap gap-3">
+                    <form method="post" action="{{ url_for('web_v2_subscribe_cancel') }}">
+                        <button class="px-4 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200">
+                            Отменить
+                        </button>
+                    </form>
+                    <button class="px-4 py-2 rounded-xl border border-neutral-200 text-neutral-700 cursor-not-allowed"
+                        title="Заглушка">
+                        Изменить способ оплаты
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
