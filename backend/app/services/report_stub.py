@@ -14,6 +14,7 @@ def make_report(case: str = "bad") -> dict:
     if case == "good":
         percent = 100
         violations = []
+        marked_violations = []
         footer = None
         flags = [
             {"type": "ok", "text": "Нет несоответствий ФЗ «О рекламе»", "strong": True},
@@ -38,6 +39,7 @@ def make_report(case: str = "bad") -> dict:
                 "link": "#"
             }
         ]
+        marked_violations = []
         footer = "Отображены <span class='text-rose-600'>не все</span> нарушения. Полный список доступен в PDF-отчёте."
         flags = [
             {"type": "ok", "text": "Нет несоответствий ФЗ «О рекламе»", "strong": False},
@@ -69,18 +71,20 @@ def make_report(case: str = "bad") -> dict:
                 "fix": "Убрать фразу, нарушающую статью, из рекламы.",
                 "link": "#"
             },
+        ]
+        marked_violations = [
             {
                 "severity": "medium",
                 "title": "Статья N пункт M",
-                "text": "Текст статьи.",
-                "fix": "Рекомендация от юристов.",
+                "text": "Текст статьи",
+                "fix": "Рекомендация от юристов",
                 "link": "#"
             },
             {
                 "severity": "low",
                 "title": "Статья N пункт M",
-                "text": "Текст статьи.",
-                "fix": "Рекомендация от юристов.",
+                "text": "Текст статьи",
+                "fix": "Рекомендация от юристов",
                 "link": "#"
             },
         ]
@@ -106,6 +110,7 @@ def make_report(case: str = "bad") -> dict:
         "ring_color": ring_color,
         "ring_deg": ring_deg,
         "violations": violations,
+        "marked_violations": marked_violations,
         "flags": flags,
         "cases": cases,
         "footer_note": footer,

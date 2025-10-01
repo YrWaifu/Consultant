@@ -4,7 +4,7 @@
     "tw:build": "tailwindcss -i ./backend/app/static/css/app.css -o ./backend/app/static/css/build.css --minify"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.13",
+    "@tailwindcss/cli": "^4.1.14",
     "tailwindcss": "^3.4.13"
   }
 }

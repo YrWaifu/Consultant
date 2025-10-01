@@ -37,9 +37,18 @@
 </div>
 
 {% if violations|length %}
-<h2 class="text-xl font-semibold mt-10 mb-4">Основные нарушения из Федерального закона «О рекламе»</h2>
+<h2 class="text-xl font-semibold mt-10 mb-4">Выявленные нарушения из Федерального закона «О рекламе»</h2>
 <div class="space-y-5">
     {% for v in violations %}
+    {% include 'components/violation_card.html' %}
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if marked_violations|length %}
+<h2 class="text-xl font-semibold mt-10 mb-4">Отмеченные нарушения из Федерального закона «О рекламе»</h2>
+<div class="space-y-5">
+    {% for v in marked_violations %}
     {% include 'components/violation_card.html' %}
     {% endfor %}
 </div>

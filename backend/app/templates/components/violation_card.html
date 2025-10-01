@@ -1,10 +1,6 @@
 {# expects: v dict with fields: title, text, fix, link, severity in ['critical','medium','low'] #}
-{% set palette = {
-'critical': {'border':'border-rose-400','bg':'bg-rose-50','link':'text-rose-600'},
-'medium': {'border':'border-amber-400','bg':'bg-amber-50','link':'text-amber-700'},
-'low': {'border':'border-emerald-400','bg':'bg-emerald-50','link':'text-emerald-700'},
-} %}
-<article class="rounded-2xl border {{ palette[v.severity].border }} {{ palette[v.severity].bg }} px-5 py-4">
+{# Все карточки нарушений теперь красные #}
+<article class="rounded-2xl border border-rose-400 bg-rose-50 px-5 py-4">
     <h3 class="font-semibold mb-2">{{ v.title }}</h3>
     <p class="text-sm text-neutral-700 mb-3">{{ v.text }}</p>
     <div class="text-sm">
@@ -13,7 +9,7 @@
     </div>
     {% if v.link %}
     <div class="mt-3 text-right">
-        <a href="{{ v.link }}" class="text-sm underline {{ palette[v.severity].link }}">Прочитать статью →</a>
+        <a href="{{ v.link }}" class="text-sm underline text-rose-600">Прочитать статью →</a>
     </div>
     {% endif %}
 </article>
