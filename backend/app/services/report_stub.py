@@ -22,11 +22,7 @@ def make_report(case: str = "bad") -> dict:
             {"type": "ok", "text": "Шанс привлечения к ответственности мал", "strong": False},
         ]
         cases = [
-            {
-                "title": "Дело №022/05/18.1-1510/2023",
-                "text": "Текст дела о рекламе",
-                "fix": "Рекомендация от юристов"
-            }
+           
         ]
     elif case == "medium":
         percent = 75

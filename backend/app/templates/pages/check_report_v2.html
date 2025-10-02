@@ -68,6 +68,10 @@
     </article>
     {% endfor %}
 </div>
+{% else %}
+<div class="mt-10 text-center text-2xl font-bold">
+    Реклама <span style="color: {{ ring_color }};">полностью соответствует</span> законодательству!
+</div>
 {% endif %}
 
 {% if footer_note %}
