@@ -3,10 +3,10 @@ from dataclasses import dataclass
 
 def _ring_color(percent: int) -> str:
     if percent >= 80:
-        return "#22c55e"  # emerald-500
-    if percent >= 40:
-        return "#f59e0b"  # amber-500
-    return "#ef4444"      # rose/red-500
+        return "#22c55e"  # emerald-500 (зеленый - хорошо)
+    if percent > 20:
+        return "#f59e0b"  # amber-500 (желтый - средне)
+    return "#ef4444"      # rose/red-500 (красный - плохо)
 
 def make_report(case: str = "bad") -> dict:
     case = (case or "bad").lower()
