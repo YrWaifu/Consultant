@@ -83,3 +83,24 @@ def get_article(article_id: str) -> dict:
         },
         "toc": _TOC,
     }
+
+
+def search_laws(q: str | None = None) -> list[dict]:
+    """Поиск по статьям закона."""
+    if not q:
+        return []
+    
+    ql = q.strip().lower()
+    results = []
+    
+    for ch in _TOC:
+        for item in ch["items"]:
+            # Поиск по заголовку статьи
+            if ql in item["title"].lower() or ql in ch["chapter"].lower():
+                results.append({
+                    "id": item["id"],
+                    "title": item["title"],
+                    "chapter": ch["chapter"],
+                })
+    
+    return results

@@ -1,0 +1,60 @@
+{% extends "layouts/base_v2.html" %}
+{% block title %}Поиск: {{ query }} — ИИ модератор рекламы{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-semibold mb-4">Результаты поиска{% if query %}: "{{ query }}"{% endif %}</h1>
+
+<!-- Поисковая строка -->
+<div class="mb-8">
+    {% set action = url_for('web_v2_search') %}
+    {% set placeholder = 'Поиск по новостям и законам...' %}
+    {% include 'components/search_bar.html' with context %}
+</div>
+
+{% if not query %}
+<div class="text-neutral-500">Введите запрос для поиска по новостям и законодательству.</div>
+{% else %}
+
+<!-- Результаты по новостям -->
+{% if news_results|length %}
+<section class="mb-10">
+    <h2 class="text-xl font-semibold mb-4 text-rose-700">📰 Новости ({{ news_results|length }})</h2>
+    <div class="space-y-4">
+        {% for item in news_results %}
+        {% include "components/news_card.html" %}
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Результаты по законам -->
+{% if law_results|length %}
+<section class="mb-10">
+    <h2 class="text-xl font-semibold mb-4 text-rose-700">⚖️ ФЗ «О рекламе» ({{ law_results|length }})</h2>
+    <div class="space-y-3">
+        {% for law in law_results %}
+        <article class="rounded-xl border border-rose-300/70 bg-white px-4 py-3 sm:px-5 sm:py-4">
+            <div class="text-xs text-neutral-500 mb-1">{{ law.chapter }}</div>
+            <h3 class="font-semibold leading-snug">
+                <a href="{{ url_for('web_v2_law_article', article_id=law.id) }}" class="hover:text-rose-700">
+                    {{ law.title }}
+                </a>
+            </h3>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Ничего не найдено -->
+{% if not news_results|length and not law_results|length %}
+<div class="text-center py-12">
+    <div class="text-6xl mb-4">🔍</div>
+    <p class="text-xl text-neutral-600 mb-2">Ничего не найдено</p>
+    <p class="text-neutral-500">Попробуйте изменить запрос или использовать другие ключевые слова</p>
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}
+

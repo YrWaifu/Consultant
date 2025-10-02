@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 
 from ..services.news_stub import list_news, get_news_detail
 from ..services.report_stub import make_report, make_report_pdf_bytes
-from ..services.laws_stub import get_law_index, get_article
+from ..services.laws_stub import get_law_index, get_article, search_laws
 from ..services.account_stub import (
     get_account, update_account,
     get_subscription, start_subscription, cancel_subscription,
@@ -41,6 +41,16 @@ async def news_detail_page(request: Request, news_id: int):
     return templates.TemplateResponse(
         "pages/news_detail_v2.html",
         {"request": request, "news": news}
+    )
+
+
+@router.get("/v2/search", response_class=HTMLResponse, name="web_v2_search")
+async def search_page(request: Request, q: str | None = None):
+    news_results = list_news(q) if q else []
+    law_results = search_laws(q) if q else []
+    return templates.TemplateResponse(
+        "pages/search_v2.html",
+        {"request": request, "query": q, "news_results": news_results, "law_results": law_results}
     )
 
 

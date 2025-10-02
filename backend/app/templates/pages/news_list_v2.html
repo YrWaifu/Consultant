@@ -7,6 +7,8 @@
 
 <!-- Вторая поисковая строка под заголовком -->
 <div class="mb-6">
+    {% set action = url_for('web_v2_news') %}
+    {% set placeholder = 'Какие новости вы ищете?' %}
     {% include 'components/search_bar.html' with context %}
 </div>
 
