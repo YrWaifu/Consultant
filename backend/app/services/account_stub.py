@@ -3,7 +3,6 @@ from datetime import date, timedelta
 from typing import Literal
 from pydantic import BaseModel
 
-# --- уже было ---
 class Account(BaseModel):
     id: int = 1
     role: str = "guest"
@@ -12,7 +11,6 @@ class Account(BaseModel):
     email: str = "guest@example.com"
     avatar_url: str | None = None
 
-# Память процесса — для демо этого более чем
 _state: dict = Account().model_dump()
 
 def get_account() -> dict:
@@ -23,8 +21,6 @@ def update_account(data: dict) -> dict:
     cleaned = {k: v for k, v in data.items() if v is not None}
     _state |= cleaned
     return _state.copy()
-
-# === НОВОЕ: подписка (заглушка) ============================================
 
 class Subscription(BaseModel):
     status: Literal["none", "active"] = "none"

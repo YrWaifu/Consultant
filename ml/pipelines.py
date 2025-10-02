@@ -6,5 +6,5 @@ def analyze_text(text: str) -> dict:
 
 
 def analyze_media(path: str) -> dict:
-    # TODO: OCR/CLIP/детекция маркировки 18+
+    # TODO
     return {"ocr": {"text": "", "confidence": 0.0}}

@@ -5,7 +5,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Системные зависимости (psycopg2-binary ок, но бережёмся)
+# Системные зависимости
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential gcc curl \
     && rm -rf /var/lib/apt/lists/*
