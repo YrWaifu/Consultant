@@ -29,7 +29,7 @@ def make_report(case: str = "bad") -> dict:
             }
         ]
     elif case == "medium":
-        percent = 80
+        percent = 75
         violations = [
             {
                 "severity": "medium",
