@@ -2,8 +2,8 @@ from rq import Worker
 from .queue import redis  # это экземпляр Redis с твоего REDIS_URL
 from .scheduler import setup_daily_tasks
 from ..services.law_parser import parse_and_save_law
-from ..models import LawVersion
 from ..db import SessionLocal
+from ..repositories.law_repository import LawRepository
 
 if __name__ == "__main__":
     print("🔧 Настройка планировщика задач...")
@@ -17,7 +17,8 @@ if __name__ == "__main__":
     for attempt in range(10):
         try:
             db = SessionLocal()
-            law_exists = db.query(LawVersion).filter_by(law_code="38-FZ", is_active=True).first()
+            repo = LawRepository(db)
+            law_exists = repo.get_active_version("38-FZ")
             
             if not law_exists:
                 print("📚 Закон не найден в БД, запускаю первичный парсинг...")

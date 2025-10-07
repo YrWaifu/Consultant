@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 from datetime import datetime, date
 from ..db import SessionLocal
-from ..models import LawVersion
+from ..repositories.law_repository import LawRepository
 
 def _ring_color(percent: int) -> str:
     if percent >= 80:
@@ -107,13 +107,11 @@ def make_report(case: str = "bad") -> dict:
     # Дата проверки и информация о законе (из БД)
     check_date = datetime.now()
     
-    # Получаем актуальную версию закона из БД
+    # Получаем актуальную версию закона через репозиторий
     db = SessionLocal()
+    repo = LawRepository(db)
     try:
-        law_version = db.query(LawVersion).filter_by(
-            law_code="38-FZ",
-            is_active=True
-        ).first()
+        law_version = repo.get_active_version("38-FZ")
         
         if law_version:
             law_name = law_version.law_name

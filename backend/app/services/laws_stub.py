@@ -1,7 +1,6 @@
 from __future__ import annotations
-from sqlalchemy import or_
 from ..db import SessionLocal
-from ..models import LawVersion, LawArticle, LawChapter
+from ..repositories.law_repository import LawRepository
 
 LAW_TITLE = 'Федеральный закон «О рекламе»'
 LAW_META = 'от 13.03.2006 N 38-ФЗ'
@@ -41,38 +40,31 @@ _TOC = [
 def get_law_index() -> dict:
     """Список разделов/статей закона из БД с правильной группировкой."""
     db = SessionLocal()
+    repo = LawRepository(db)
+    
     try:
         # Получаем активную версию закона
-        law_version = db.query(LawVersion).filter_by(
-            law_code=LAW_CODE, 
-            is_active=True
-        ).first()
+        law_version = repo.get_active_version(LAW_CODE)
         
         if not law_version:
             # Если в БД пусто, возвращаем старую заглушку
             return {"title": LAW_TITLE, "meta": LAW_META, "toc": _TOC}
         
-        # Получаем главы и статьи
-        chapters = db.query(LawChapter).filter_by(
-            version_id=law_version.id
-        ).order_by(LawChapter.chapter_number).all()
+        # Получаем главы
+        chapters = repo.get_chapters_by_version(law_version.id)
         
         # Формируем структуру TOC: каждая глава со своими статьями
         toc = []
         
         for chapter in chapters:
             # Получаем статьи этой главы
-            articles = db.query(LawArticle).filter_by(
-                chapter_id=chapter.id
-            ).all()
+            articles = repo.get_articles_by_chapter(chapter.id)
             
             # Сортируем статьи по номеру (числовая сортировка)
             def article_sort_key(art):
                 try:
-                    # Конвертируем номер в float (чтобы 5.1 работало)
                     return float(art.article_number)
                 except:
-                    # Если не число, возвращаем большое значение
                     return 99999
             
             articles.sort(key=article_sort_key)
@@ -115,12 +107,11 @@ def _find_article(article_id: str):
 def get_article(article_id: str) -> dict:
     """Текст статьи + соседние ссылки и оглавление справа (из БД)."""
     db = SessionLocal()
+    repo = LawRepository(db)
+    
     try:
         # Получаем активную версию
-        law_version = db.query(LawVersion).filter_by(
-            law_code=LAW_CODE,
-            is_active=True
-        ).first()
+        law_version = repo.get_active_version(LAW_CODE)
         
         if not law_version:
             # Fallback на заглушку
@@ -149,29 +140,21 @@ def get_article(article_id: str) -> dict:
         # Извлекаем номер статьи из article_id (например: "art-5" → "5")
         article_number = article_id.replace("art-", "")
         
-        # Ищем статью в БД
-        article = db.query(LawArticle).filter_by(
-            version_id=law_version.id,
-            article_number=article_number
-        ).first()
+        # Ищем статью в БД через репозиторий
+        article = repo.get_article_by_number(law_version.id, article_number)
         
         if not article:
             # Берем первую статью
-            article = db.query(LawArticle).filter_by(
-                version_id=law_version.id
-            ).order_by(LawArticle.article_number).first()
+            article = repo.get_first_article(law_version.id)
         
         # Используем HTML если есть, иначе plain text
         if article.content_html:
-            paragraphs = [article.content_html]  # HTML в одном блоке
+            paragraphs = [article.content_html]
         else:
-            # Fallback: разбиваем plain text на параграфы
             paragraphs = [p.strip() for p in article.content.split("\n\n") if p.strip()]
         
         # Получаем соседние статьи
-        all_articles = db.query(LawArticle).filter_by(
-            version_id=law_version.id
-        ).all()
+        all_articles = repo.get_articles_by_version(law_version.id)
         
         # Сортируем статьи по номеру (числовая сортировка)
         def article_sort_key(art):
@@ -197,15 +180,15 @@ def get_article(article_id: str) -> dict:
         
         return {
             "title": law_version.law_name,
-            "meta": "",  # Убрали дублирование - дата уже в названии
+            "meta": "",
             "article": {
                 "id": current_id,
                 "heading": article.title,
-                "chapter": "",  # можно добавить логику определения главы
+                "chapter": "",
                 "paragraphs": paragraphs,
                 "prev_id": prev_id,
                 "next_id": next_id,
-                "source_url": article.source_url,  # Ссылка на источник
+                "source_url": article.source_url,
             },
             "toc": toc_data.get("toc", []),
         }
@@ -220,12 +203,11 @@ def search_laws(q: str | None = None) -> list[dict]:
         return []
     
     db = SessionLocal()
+    repo = LawRepository(db)
+    
     try:
         # Получаем активную версию
-        law_version = db.query(LawVersion).filter_by(
-            law_code=LAW_CODE,
-            is_active=True
-        ).first()
+        law_version = repo.get_active_version(LAW_CODE)
         
         if not law_version:
             # Fallback на заглушку
@@ -241,22 +223,15 @@ def search_laws(q: str | None = None) -> list[dict]:
                         })
             return results
         
-        # Поиск в БД по title и content
-        ql = f"%{q.strip()}%"
-        articles = db.query(LawArticle).filter(
-            LawArticle.version_id == law_version.id,
-            or_(
-                LawArticle.title.ilike(ql),
-                LawArticle.content.ilike(ql)
-            )
-        ).limit(20).all()
+        # Поиск в БД через репозиторий
+        articles = repo.search_articles(law_version.id, q, limit=20)
         
         results = []
         for article in articles:
             results.append({
                 "id": f"art-{article.article_number}",
                 "title": article.title,
-                "chapter": "",  # можно добавить связь с главой
+                "chapter": "",
             })
         
         return results

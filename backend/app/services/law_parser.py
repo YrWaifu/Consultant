@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup, Tag
 from sqlalchemy.orm import Session
 
 from ..db import SessionLocal, engine
-from ..models import LawVersion, LawArticle, LawChapter
+from ..repositories.law_repository import LawRepository
 
 
 # Константы
@@ -259,23 +259,20 @@ def parse_article_page(html: str, url: str) -> Dict[str, str]:
 def save_to_database(structure: List[Dict], version_date: date, law_name: str = LAW_NAME) -> None:
     """Сохранение спарсенных данных в БД со связями глава-статьи"""
     db = SessionLocal()
+    repo = LawRepository(db)
     
     try:
         # 1. Деактивировать старые версии
-        db.query(LawVersion).filter_by(law_code=LAW_CODE, is_active=True).update({"is_active": False})
-        db.commit()
+        repo.deactivate_versions(LAW_CODE)
         
         # 2. Создать новую версию
-        law_version = LawVersion(
+        law_version = repo.create_version(
             law_name=law_name,
             law_code=LAW_CODE,
             source_url=LAW_BASE_URL,
             version_date=version_date,
             is_active=True
         )
-        db.add(law_version)
-        db.commit()
-        db.refresh(law_version)
         
         print(f"✅ Создана версия закона ID={law_version.id}, дата={version_date}")
         
@@ -292,16 +289,13 @@ def save_to_database(structure: List[Dict], version_date: date, law_name: str = 
                 match = re.search(r"Глава\s+(\d+)", chapter_data["title"])
                 chapter_num = int(match.group(1)) if match else 0
                 
-                chapter = LawChapter(
+                chapter = repo.create_chapter(
                     version_id=law_version.id,
                     chapter_number=chapter_num,
                     title=parsed["title"],
                     content=parsed["content"],
                     source_url=parsed["url"]
                 )
-                db.add(chapter)
-                db.commit()
-                db.refresh(chapter)
                 total_count += 1
                 
             except Exception as e:
@@ -319,21 +313,20 @@ def save_to_database(structure: List[Dict], version_date: date, law_name: str = 
                     match = re.search(r"Статья\s+(\d+(?:\.\d+)?)", article_data["title"])
                     article_num = match.group(1) if match else "0"
                     
-                    article = LawArticle(
+                    repo.create_article(
                         version_id=law_version.id,
-                        chapter_id=chapter.id,  # Связываем статью с главой
+                        chapter_id=chapter.id,
                         article_number=article_num,
                         title=parsed["title"],
                         content=parsed["content"],
-                        content_html=parsed.get("content_html"),  # HTML с форматированием
+                        content_html=parsed.get("content_html"),
                         source_url=parsed["url"]
                     )
-                    db.add(article)
                     total_count += 1
                     
                     # Коммитим каждые 5 записей
                     if total_count % 5 == 0:
-                        db.commit()
+                        repo.bulk_commit()
                     
                     time.sleep(0.7)  # Задержка между запросами
                     
@@ -341,7 +334,7 @@ def save_to_database(structure: List[Dict], version_date: date, law_name: str = 
                     print(f"    ⚠️ Ошибка парсинга статьи: {e}")
                     continue
         
-        db.commit()
+        repo.bulk_commit()
         print(f"✅ Сохранено {total_count} документов в БД")
         
     except Exception as e:
