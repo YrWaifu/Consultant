@@ -1,5 +1,6 @@
 # Простая заглушка отчёта: bad / medium / good
 from dataclasses import dataclass
+from datetime import datetime, date
 
 def _ring_color(percent: int) -> str:
     if percent >= 80:
@@ -100,6 +101,11 @@ def make_report(case: str = "bad") -> dict:
 
     ring_color = _ring_color(percent)
     ring_deg = float(percent) * 3.6
+    
+    # Дата проверки и информация о законе
+    check_date = datetime.now()
+    law_version_date = date(2024, 10, 1)  # Дата последних изменений в ФЗ «О рекламе»
+    law_name = "Федеральный закон от 13.03.2006 N 38-ФЗ «О рекламе»"
 
     return {
         "percent": percent,
@@ -110,6 +116,10 @@ def make_report(case: str = "bad") -> dict:
         "flags": flags,
         "cases": cases,
         "footer_note": footer,
+        # Юридическая информация
+        "check_date": check_date,
+        "law_name": law_name,
+        "law_version_date": law_version_date,
     }
 
 
