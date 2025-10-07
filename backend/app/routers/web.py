@@ -15,13 +15,9 @@ from ..services.stats_stub import get_stats
 router = APIRouter()
 templates = Jinja2Templates(directory="backend/app/templates")
 
-@router.get("/", response_class=HTMLResponse)
-async def index(request: Request, q: str | None = None):
-    items = list_news(q)
-    return templates.TemplateResponse(
-        "pages/news_list_v2.html",
-        {"request": request, "items": items}
-    )
+@router.get("/", response_class=HTMLResponse, name="web_v2_check")
+async def index(request: Request):
+    return templates.TemplateResponse("pages/check_v2.html", {"request": request})
 
 
 @router.get("/v2/news", response_class=HTMLResponse, name="web_v2_news")

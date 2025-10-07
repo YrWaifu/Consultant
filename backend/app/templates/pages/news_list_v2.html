@@ -5,13 +5,6 @@
 {% block content %}
 <h1 class="text-2xl font-semibold mb-4">Все новости</h1>
 
-<!-- Вторая поисковая строка под заголовком -->
-<div class="mb-6">
-    {% set action = url_for('web_v2_news') %}
-    {% set placeholder = 'Какие новости вы ищете?' %}
-    {% include 'components/search_bar.html' with context %}
-</div>
-
 <div class="space-y-4">
     {% for item in items %}
     {% include "components/news_card.html" %}
