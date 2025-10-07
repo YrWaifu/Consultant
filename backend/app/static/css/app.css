@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Стили для текста закона */
+.law-content p {
+  margin-bottom: 1rem;
+  text-indent: 2em;
+}
+
+.law-content ul,
+.law-content ol {
+  margin-left: 2em;
+  margin-bottom: 1rem;
+}
+
+.law-content li {
+  margin-bottom: 0.5rem;
+}

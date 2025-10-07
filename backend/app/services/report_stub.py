@@ -1,6 +1,8 @@
 # Простая заглушка отчёта: bad / medium / good
 from dataclasses import dataclass
 from datetime import datetime, date
+from ..db import SessionLocal
+from ..models import LawVersion
 
 def _ring_color(percent: int) -> str:
     if percent >= 80:
@@ -102,10 +104,26 @@ def make_report(case: str = "bad") -> dict:
     ring_color = _ring_color(percent)
     ring_deg = float(percent) * 3.6
     
-    # Дата проверки и информация о законе
+    # Дата проверки и информация о законе (из БД)
     check_date = datetime.now()
-    law_version_date = date(2024, 10, 1)  # Дата последних изменений в ФЗ «О рекламе»
-    law_name = "Федеральный закон от 13.03.2006 N 38-ФЗ «О рекламе»"
+    
+    # Получаем актуальную версию закона из БД
+    db = SessionLocal()
+    try:
+        law_version = db.query(LawVersion).filter_by(
+            law_code="38-FZ",
+            is_active=True
+        ).first()
+        
+        if law_version:
+            law_name = law_version.law_name
+            law_version_date = law_version.version_date
+        else:
+            # Fallback если БД пустая
+            law_name = "Федеральный закон от 13.03.2006 N 38-ФЗ «О рекламе»"
+            law_version_date = date(2024, 10, 1)
+    finally:
+        db.close()
 
     return {
         "percent": percent,
