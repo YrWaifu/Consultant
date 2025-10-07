@@ -256,7 +256,7 @@ def parse_article_page(html: str, url: str) -> Dict[str, str]:
 
 
 # -------------------- DATABASE OPERATIONS -------------------- #
-def save_to_database(structure: List[Dict], version_date: date) -> None:
+def save_to_database(structure: List[Dict], version_date: date, law_name: str = LAW_NAME) -> None:
     """Сохранение спарсенных данных в БД со связями глава-статьи"""
     db = SessionLocal()
     
@@ -267,7 +267,7 @@ def save_to_database(structure: List[Dict], version_date: date) -> None:
         
         # 2. Создать новую версию
         law_version = LawVersion(
-            law_name=LAW_NAME,
+            law_name=law_name,
             law_code=LAW_CODE,
             source_url=LAW_BASE_URL,
             version_date=version_date,
@@ -352,6 +352,34 @@ def save_to_database(structure: List[Dict], version_date: date) -> None:
         db.close()
 
 
+def extract_law_metadata(html: str) -> Dict:
+    """Извлечение метаданных закона: название и дата из названия"""
+    soup = BeautifulSoup(html, "lxml")
+    
+    # Название закона
+    title_el = soup.select_one(".document-page__title h1")
+    law_name = LAW_NAME  # default
+    law_date = date(2006, 3, 13)  # default
+    
+    if title_el:
+        title_text = title_el.get_text(strip=True)
+        # Убираем "(последняя редакция)"
+        law_name = re.sub(r'\s*\(последняя редакция\)\s*$', '', title_text)
+        
+        # Извлекаем дату из названия: "Федеральный закон "О рекламе" от 13.03.2006 N 38-ФЗ"
+        date_match = re.search(r'от\s+(\d{2}\.\d{2}\.\d{4})', law_name)
+        if date_match:
+            try:
+                law_date = datetime.strptime(date_match.group(1), '%d.%m.%Y').date()
+            except:
+                pass
+    
+    return {
+        "law_name": law_name,
+        "version_date": law_date
+    }
+
+
 # -------------------- MAIN FUNCTION -------------------- #
 def parse_and_save_law(law_url: str = LAW_BASE_URL) -> None:
     """
@@ -360,17 +388,23 @@ def parse_and_save_law(law_url: str = LAW_BASE_URL) -> None:
     """
     print(f"🔍 Начинаю парсинг закона: {law_url}")
     
-    # 1. Загрузка оглавления и извлечение структуры
+    # 1. Загрузка оглавления
     toc_html = fetch(law_url)
+    
+    # 2. Извлечение метаданных
+    metadata = extract_law_metadata(toc_html)
+    print(f"📋 Закон: {metadata['law_name']}")
+    print(f"📅 Дата последней редакции: {metadata['version_date']}")
+    
+    # 3. Извлечение структуры
     structure = extract_structured_links(toc_html, law_url)
     
     # Подсчет общего количества документов
     total_docs = len(structure) + sum(len(ch["articles"]) for ch in structure)
     print(f"📚 Найдено {len(structure)} глав, {total_docs} документов для парсинга")
     
-    # 2. Сохранение в БД со структурой
-    version_date = date.today()  # Можно передавать как параметр
-    save_to_database(structure, version_date)
+    # 4. Сохранение в БД со структурой и метаданными
+    save_to_database(structure, metadata["version_date"], metadata["law_name"])
     
     print("🎉 Парсинг закона завершён успешно!")
 

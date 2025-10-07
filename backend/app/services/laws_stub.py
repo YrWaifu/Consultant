@@ -92,7 +92,7 @@ def get_law_index() -> dict:
         
         return {
             "title": law_version.law_name,
-            "meta": f"Версия от {law_version.version_date.strftime('%d.%m.%Y')}",
+            "meta": "",  
             "toc": toc if toc else _TOC
         }
         
@@ -171,7 +171,16 @@ def get_article(article_id: str) -> dict:
         # Получаем соседние статьи
         all_articles = db.query(LawArticle).filter_by(
             version_id=law_version.id
-        ).order_by(LawArticle.article_number).all()
+        ).all()
+        
+        # Сортируем статьи по номеру (числовая сортировка)
+        def article_sort_key(art):
+            try:
+                return float(art.article_number)
+            except:
+                return 99999
+        
+        all_articles.sort(key=article_sort_key)
         
         article_ids = [f"art-{a.article_number}" for a in all_articles]
         current_id = f"art-{article.article_number}"
@@ -188,7 +197,7 @@ def get_article(article_id: str) -> dict:
         
         return {
             "title": law_version.law_name,
-            "meta": f"Версия от {law_version.version_date.strftime('%d.%m.%Y')}",
+            "meta": "",  # Убрали дублирование - дата уже в названии
             "article": {
                 "id": current_id,
                 "heading": article.title,
@@ -196,6 +205,7 @@ def get_article(article_id: str) -> dict:
                 "paragraphs": paragraphs,
                 "prev_id": prev_id,
                 "next_id": next_id,
+                "source_url": article.source_url,  # Ссылка на источник
             },
             "toc": toc_data.get("toc", []),
         }

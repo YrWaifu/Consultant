@@ -7,7 +7,7 @@
     class="inline-flex items-center gap-2 text-neutral-700 hover:text-neutral-900 mb-4">←</a>
 
 <h1 class="text-center text-2xl font-semibold">
-    {{ title }}<br><span class="text-neutral-600 text-xl">{{ meta }}</span>
+    {{ title }}{% if meta %}<br><span class="text-neutral-600 text-xl">{{ meta }}</span>{% endif %}
 </h1>
 
 <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -20,6 +20,18 @@
                 {{ p|safe }}
             {% endfor %}
         </div>
+
+        {% if article.source_url %}
+        <p class="text-xs text-neutral-500 mt-4 pt-4 border-t border-neutral-200">
+            Источник: 
+            <a href="{{ article.source_url }}" 
+               target="_blank" 
+               rel="noopener noreferrer"
+               class="text-rose-600 hover:underline">
+                КонсультантПлюс
+            </a>
+        </p>
+        {% endif %}
 
         <div class="mt-6 flex justify-between text-sm text-neutral-700">
             <div>
