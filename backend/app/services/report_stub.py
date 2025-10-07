@@ -39,7 +39,7 @@ def make_report(case: str = "bad") -> dict:
             }
         ]
         marked_violations = []
-        footer = "Отображены <span class='text-rose-600'>не все</span> нарушения. Полный список доступен в PDF-отчёте."
+        footer = ""
         flags = [
             {"type": "ok", "text": "Нет несоответствий ФЗ «О рекламе»", "strong": False},
             {"type": "warn", "text": "В существующей судебной практике есть похожие случаи привлечения к ответственности", "strong": True},
@@ -87,7 +87,7 @@ def make_report(case: str = "bad") -> dict:
                 "link": "#"
             },
         ]
-        footer = "Отображены <span class='text-rose-600'>не все</span> нарушения. Полный список нарушений доступен в PDF-отчёте."
+        footer = ""
         flags = [
             {"type": "warn", "text": "Есть несоответствия ФЗ «О рекламе»", "strong": True},
             {"type": "warn", "text": "В существующей судебной практике есть похожие случаи привлечения к ответственности", "strong": True},
