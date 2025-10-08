@@ -36,7 +36,7 @@
         <article class="rounded-xl border border-rose-300/70 bg-white px-4 py-3 sm:px-5 sm:py-4">
             <div class="text-xs text-neutral-500 mb-1">{{ law.chapter }}</div>
             <h3 class="font-semibold leading-snug">
-                <a href="{{ url_for('web_v2_law_article', article_id=law.id) }}" class="hover:text-rose-700">
+                <a href="{{ url_for('web_v2_law_article', article_id=law.id) }}?highlight={{ query }}" class="hover:text-rose-700">
                     {{ law.title }}
                 </a>
             </h3>

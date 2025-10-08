@@ -56,4 +56,42 @@
         </div>
     </div>
 </div>
+
+<script>
+// Подсветка найденного слова из поиска
+(function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const highlight = urlParams.get('highlight');
+    
+    if (highlight && highlight.trim()) {
+        const content = document.querySelector('.law-content');
+        if (content) {
+            const text = content.innerHTML;
+            const regex = new RegExp(`(${highlight.trim()})`, 'gi');
+            const highlighted = text.replace(regex, '<mark class="highlight-search">$1</mark>');
+            content.innerHTML = highlighted;
+            
+            // Прокрутить к первому найденному слову
+            const firstMark = content.querySelector('mark.highlight-search');
+            if (firstMark) {
+                firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            // Убрать подсветку через 5 секунд
+            setTimeout(() => {
+                document.querySelectorAll('mark.highlight-search').forEach(mark => {
+                    mark.classList.add('fade-out');
+                });
+                
+                setTimeout(() => {
+                    document.querySelectorAll('mark.highlight-search').forEach(mark => {
+                        const text = mark.textContent;
+                        mark.replaceWith(text);
+                    });
+                }, 1000);
+            }, 5000);
+        }
+    }
+})();
+</script>
 {% endblock %}

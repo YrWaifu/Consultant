@@ -202,12 +202,12 @@ def extract_clean_html(node: Tag) -> str:
     for bad in node.find_all(["script", "style", "noscript"]):
         bad.decompose()
     
-    # Ищем первый параграф с текстом "Статья N..." и удаляем его
-    first_p = node.find("p")
-    if first_p:
-        text = first_p.get_text(strip=True)
-        if re.match(r'^Статья\s+\d+', text):
-            first_p.decompose()
+    # Ищем ВСЕ параграфы с текстом "Статья N..." и удаляем (дубликаты заголовков)
+    for p in node.find_all("p"):
+        text = p.get_text(strip=True)
+        # Если параграф содержит только заголовок статьи - удаляем
+        if re.match(r'^Статья\s+\d+[\.\d]*\.\s+.+$', text) and len(text) < 200:
+            p.decompose()
     
     # Получаем HTML
     html = str(node)
