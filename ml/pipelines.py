@@ -1,4 +1,4 @@
-from classifiers import check_legislation
+from ml.classifiers import check_legislation
 
 
 def analyze_text(text: str) -> list:

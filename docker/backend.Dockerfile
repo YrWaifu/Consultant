@@ -20,7 +20,8 @@ COPY ml/ ml/
 COPY alembic.ini .
 COPY manage.py .
 COPY docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Убедиться, что скрипт без CRLF и исполняемый
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 ENV PYTHONPATH=/app
 

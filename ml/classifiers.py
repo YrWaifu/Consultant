@@ -4,7 +4,7 @@ import re
 from huggingface_hub import InferenceClient
 from collections import defaultdict
 
-from dictionaries import *
+from ml.dictionaries import *
 
 """
 Модуль поиска нарушений в текстовой рекламе

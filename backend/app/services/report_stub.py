@@ -1,8 +1,8 @@
-# Простая заглушка отчёта: bad / medium / good
 from dataclasses import dataclass
 from datetime import datetime, date
 from ..db import SessionLocal
 from ..repositories.law_repository import LawRepository
+from .ml_core import run_ml
 
 def _ring_color(percent: int) -> str:
     if percent >= 80:
@@ -11,108 +11,68 @@ def _ring_color(percent: int) -> str:
         return "#f59e0b"  # amber-500 (желтый - средне)
     return "#ef4444"      # rose/red-500 (красный - плохо)
 
-def make_report(case: str = "bad") -> dict:
-    case = (case or "bad").lower()
+def make_report_from_input(text: str | None, claims: list[str] | None = None, media_path: str | None = None) -> dict:
+    """
+    Генерация отчёта на основе реального вывода ML.
+    text/claims/media_path — входные данные пользователя.
+    """
+    ml_out = run_ml(text, media_path)
 
-    if case == "good":
-        percent = 100
-        violations = []
-        marked_violations = []
-        footer = None
-        flags = [
+    # Преобразуем вывод ML в структуру для шаблона
+    violations: list[dict] = []
+    cases: list[dict] = []
+
+    for item in ml_out.get("text", []) or []:
+        for article, info in item.items():
+            # Пока все нарушения ссылаем на статью 5 ФЗ «О рекламе»
+            law_article_id = "art-5"
+            violations.append({
+                "severity": "critical",  # базовая градация; можно доработать
+                "title": str(article),
+                "text": info.get("text") or "",
+                "fix": info.get("recommendations") or "",
+                "link": f"/v2/laws/article/{law_article_id}",
+            })
+            jp = info.get("judicial_proceedings") or {}
+            for case_title, case_text in jp.items():
+                cases.append({
+                    "title": case_title,
+                    "text": case_text,
+                    "fix": info.get("recommendations") or "",
+                })
+
+    # Итоговый процент и индикаторы
+    has_violations = len(violations) > 0
+    # Кольцо всегда полностью заполнено, цвет и подпись зависят от наличия нарушений
+    percent = 100
+    footer = None if not has_violations else ""
+    flags = (
+        [
             {"type": "ok", "text": "Нет несоответствий ФЗ «О рекламе»", "strong": True},
             {"type": "ok", "text": "В соответствии с существующей судебной практикой риск привлечения к ответственности отсутствует", "strong": False},
             {"type": "ok", "text": "Шанс привлечения к ответственности мал", "strong": False},
         ]
-        cases = [
-           
-        ]
-    elif case == "medium":
-        percent = 75
-        violations = [
-            {
-                "severity": "medium",
-                "title": "Статья 5 пункт N",
-                "text": "Текст статьи о нарушении. Описание сути выявленного несоответствия.",
-                "fix": "Рекомендация от юристов по исправлению.",
-                "link": "#"
-            }
-        ]
-        marked_violations = []
-        footer = ""
-        flags = [
-            {"type": "ok", "text": "Нет несоответствий ФЗ «О рекламе»", "strong": False},
-            {"type": "warn", "text": "В существующей судебной практике есть похожие случаи привлечения к ответственности", "strong": True},
-            {"type": "ok", "text": "Шанс привлечения к ответственности мал", "strong": False},
-        ]
-        cases = [
-            {
-                "title": "Дело №022/05/18.1-1510/2023",
-                "text": "Текст дела о рекламе",
-                "fix": "Рекомендация от юристов"
-            }
-        ]
-    else:
-        # bad
-        percent = 20
-        violations = [
-            {
-                "severity": "critical",
-                "title": "Статья 5 пункт 1",
-                "text": "Запрещает использовать слова «лучший», «самый», «только», «абсолютный» и подобные.",
-                "fix": "Добавить шкалу, по которой проводилась оценка, как сноску.",
-                "link": "#"
-            },
-            {
-                "severity": "critical",
-                "title": "Статья 5 пункт 3",
-                "text": "Запрещает указывать на лечебные свойства объекта рекламирования, если это не лекарственное средство, услуга или изделие.",
-                "fix": "Убрать фразу, нарушающую статью, из рекламы.",
-                "link": "#"
-            },
-        ]
-        marked_violations = [
-            {
-                "severity": "medium",
-                "title": "Статья N пункт M",
-                "text": "Текст статьи",
-                "fix": "Рекомендация от юристов",
-                "link": "#"
-            },
-            {
-                "severity": "low",
-                "title": "Статья N пункт M",
-                "text": "Текст статьи",
-                "fix": "Рекомендация от юристов",
-                "link": "#"
-            },
-        ]
-        footer = ""
-        flags = [
+        if not has_violations
+        else [
             {"type": "warn", "text": "Есть несоответствия ФЗ «О рекламе»", "strong": True},
             {"type": "warn", "text": "В существующей судебной практике есть похожие случаи привлечения к ответственности", "strong": True},
             {"type": "warn", "text": "Есть шанс привлечения к ответственности", "strong": False},
         ]
-        cases = [
-            {
-                "title": "Дело №022/05/18.1-1510/2023",
-                "text": "В паблике ... распространялась рекламная информация без пометки «реклама».",
-                "fix": "Добавить пометку «реклама» и регистрацию на ОРД."
-            }
-        ]
+    )
 
-    ring_color = _ring_color(percent)
-    ring_deg = float(percent) * 3.6
-    
+    ring_color = "#ef4444" if has_violations else "#22c55e"
+    ring_deg = 360.0
+    ring_label = "BAD" if has_violations else "GOOD"
+
     # Дата проверки и информация о законе (из БД)
     check_date = datetime.now()
-    
+
     # Получаем актуальную версию закона через репозиторий
     db = SessionLocal()
     repo = LawRepository(db)
     try:
         law_version = repo.get_active_version("38-FZ")
-        
+
         if law_version:
             law_name = law_version.law_name
             law_version_date = law_version.version_date
@@ -127,8 +87,10 @@ def make_report(case: str = "bad") -> dict:
         "percent": percent,
         "ring_color": ring_color,
         "ring_deg": ring_deg,
+        "ring_label": ring_label,
+        "is_ok": (not has_violations),
         "violations": violations,
-        "marked_violations": marked_violations,
+        "marked_violations": [],
         "flags": flags,
         "cases": cases,
         "footer_note": footer,

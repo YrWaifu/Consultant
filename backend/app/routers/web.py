@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from ..services.news_stub import list_news, get_news_detail
-from ..services.report_stub import make_report, make_report_pdf_bytes
+from ..services.report_stub import make_report_from_input, make_report_pdf_bytes
 from ..services.laws_stub import get_law_index, get_article, search_laws
 from ..services.account_stub import (
     get_account, update_account,
@@ -62,9 +62,8 @@ async def check_submit(
     claims: list[str] | None = Form(None),
     file: UploadFile | None = File(None),
 ):
-    # временно всегда ведём в «плохой» отчёт
-    url = request.url_for("web_v2_report").include_query_params(case="bad")
-    return RedirectResponse(url, status_code=303)
+    data = make_report_from_input(text=text, claims=claims, media_path=None)
+    return templates.TemplateResponse("pages/check_report_v2.html", {"request": request, **data})
 
 
 @router.get("/v2/report", response_class=HTMLResponse, name="web_v2_report")
