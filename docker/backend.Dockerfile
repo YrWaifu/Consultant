@@ -17,7 +17,12 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # Код
 COPY backend/ backend/
 COPY ml/ ml/
+COPY alembic.ini .
+COPY manage.py .
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 ENV PYTHONPATH=/app
 
-# Запуск
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]

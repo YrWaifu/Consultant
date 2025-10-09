@@ -1,5 +1,8 @@
 # Простая заглушка отчёта: bad / medium / good
 from dataclasses import dataclass
+from datetime import datetime, date
+from ..db import SessionLocal
+from ..repositories.law_repository import LawRepository
 
 def _ring_color(percent: int) -> str:
     if percent >= 80:
@@ -36,7 +39,7 @@ def make_report(case: str = "bad") -> dict:
             }
         ]
         marked_violations = []
-        footer = "Отображены <span class='text-rose-600'>не все</span> нарушения. Полный список доступен в PDF-отчёте."
+        footer = ""
         flags = [
             {"type": "ok", "text": "Нет несоответствий ФЗ «О рекламе»", "strong": False},
             {"type": "warn", "text": "В существующей судебной практике есть похожие случаи привлечения к ответственности", "strong": True},
@@ -84,7 +87,7 @@ def make_report(case: str = "bad") -> dict:
                 "link": "#"
             },
         ]
-        footer = "Отображены <span class='text-rose-600'>не все</span> нарушения. Полный список нарушений доступен в PDF-отчёте."
+        footer = ""
         flags = [
             {"type": "warn", "text": "Есть несоответствия ФЗ «О рекламе»", "strong": True},
             {"type": "warn", "text": "В существующей судебной практике есть похожие случаи привлечения к ответственности", "strong": True},
@@ -100,6 +103,25 @@ def make_report(case: str = "bad") -> dict:
 
     ring_color = _ring_color(percent)
     ring_deg = float(percent) * 3.6
+    
+    # Дата проверки и информация о законе (из БД)
+    check_date = datetime.now()
+    
+    # Получаем актуальную версию закона через репозиторий
+    db = SessionLocal()
+    repo = LawRepository(db)
+    try:
+        law_version = repo.get_active_version("38-FZ")
+        
+        if law_version:
+            law_name = law_version.law_name
+            law_version_date = law_version.version_date
+        else:
+            # Fallback если БД пустая
+            law_name = "Федеральный закон от 13.03.2006 N 38-ФЗ «О рекламе»"
+            law_version_date = date(2024, 10, 1)
+    finally:
+        db.close()
 
     return {
         "percent": percent,
@@ -110,6 +132,10 @@ def make_report(case: str = "bad") -> dict:
         "flags": flags,
         "cases": cases,
         "footer_note": footer,
+        # Юридическая информация
+        "check_date": check_date,
+        "law_name": law_name,
+        "law_version_date": law_version_date,
     }
 
 

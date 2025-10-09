@@ -1,7 +1,10 @@
 from __future__ import annotations
+from ..db import SessionLocal
+from ..repositories.law_repository import LawRepository
 
 LAW_TITLE = 'Федеральный закон «О рекламе»'
 LAW_META = 'от 13.03.2006 N 38-ФЗ'
+LAW_CODE = "38-FZ"
 
 _TOC = [
     {
@@ -35,8 +38,58 @@ _TOC = [
 
 
 def get_law_index() -> dict:
-    """Список разделов/статей закона."""
-    return {"title": LAW_TITLE, "meta": LAW_META, "toc": _TOC}
+    """Список разделов/статей закона из БД с правильной группировкой."""
+    db = SessionLocal()
+    repo = LawRepository(db)
+    
+    try:
+        # Получаем активную версию закона
+        law_version = repo.get_active_version(LAW_CODE)
+        
+        if not law_version:
+            # Если в БД пусто, возвращаем старую заглушку
+            return {"title": LAW_TITLE, "meta": LAW_META, "toc": _TOC}
+        
+        # Получаем главы
+        chapters = repo.get_chapters_by_version(law_version.id)
+        
+        # Формируем структуру TOC: каждая глава со своими статьями
+        toc = []
+        
+        for chapter in chapters:
+            # Получаем статьи этой главы
+            articles = repo.get_articles_by_chapter(chapter.id)
+            
+            # Сортируем статьи по номеру (числовая сортировка)
+            def article_sort_key(art):
+                try:
+                    return float(art.article_number)
+                except:
+                    return 99999
+            
+            articles.sort(key=article_sort_key)
+            
+            chapter_toc = {
+                "chapter": chapter.title,
+                "items": []
+            }
+            
+            for article in articles:
+                chapter_toc["items"].append({
+                    "id": f"art-{article.article_number}",
+                    "title": article.title,
+                })
+            
+            toc.append(chapter_toc)
+        
+        return {
+            "title": law_version.law_name,
+            "meta": "",  
+            "toc": toc if toc else _TOC
+        }
+        
+    finally:
+        db.close()
 
 
 def _flat_ids():
@@ -52,55 +105,136 @@ def _find_article(article_id: str):
 
 
 def get_article(article_id: str) -> dict:
-    """Текст статьи + соседние ссылки и оглавление справа."""
-    chapter_title, item = _find_article(article_id)
-    if not item:
-        # по-хорошему тут 404, но для заглушки вернём первую статью
-        chapter_title, item = _find_article(_flat_ids()[0])
-
-    # простая болванка текста
-    paragraphs = [
-        "Целями настоящего Федерального закона являются развитие рынков товаров, работ и услуг на основе соблюдения принципов добросовестной конкуренции...",
-        "Закон обеспечивает единое экономическое пространство, реализацию прав потребителей на получение достоверной рекламы и т. д.",
-        "Настоящая статья приведена как заглушка. Здесь будет реальный текст с разбивкой на пункты.",
-    ]
-
-    ids = _flat_ids()
-    idx = ids.index(item["id"])
-    prev_id = ids[idx - 1] if idx > 0 else None
-    next_id = ids[idx + 1] if idx < len(ids) - 1 else None
-
-    return {
-        "title": LAW_TITLE,
-        "meta": LAW_META,
-        "article": {
-            "id": item["id"],
-            "heading": item["title"],
-            "chapter": chapter_title,
-            "paragraphs": paragraphs,
-            "prev_id": prev_id,
-            "next_id": next_id,
-        },
-        "toc": _TOC,
-    }
+    """Текст статьи + соседние ссылки и оглавление справа (из БД)."""
+    db = SessionLocal()
+    repo = LawRepository(db)
+    
+    try:
+        # Получаем активную версию
+        law_version = repo.get_active_version(LAW_CODE)
+        
+        if not law_version:
+            # Fallback на заглушку
+            chapter_title, item = _find_article(article_id)
+            if not item:
+                chapter_title, item = _find_article(_flat_ids()[0])
+            
+            paragraphs = [
+                "Целями настоящего Федерального закона являются развитие рынков товаров...",
+            ]
+            
+            return {
+                "title": LAW_TITLE,
+                "meta": LAW_META,
+                "article": {
+                    "id": item["id"],
+                    "heading": item["title"],
+                    "chapter": chapter_title,
+                    "paragraphs": paragraphs,
+                    "prev_id": None,
+                    "next_id": None,
+                },
+                "toc": _TOC,
+            }
+        
+        # Извлекаем номер статьи из article_id (например: "art-5" → "5")
+        article_number = article_id.replace("art-", "")
+        
+        # Ищем статью в БД через репозиторий
+        article = repo.get_article_by_number(law_version.id, article_number)
+        
+        if not article:
+            # Берем первую статью
+            article = repo.get_first_article(law_version.id)
+        
+        # Используем HTML если есть, иначе plain text
+        if article.content_html:
+            paragraphs = [article.content_html]
+        else:
+            paragraphs = [p.strip() for p in article.content.split("\n\n") if p.strip()]
+        
+        # Получаем соседние статьи
+        all_articles = repo.get_articles_by_version(law_version.id)
+        
+        # Сортируем статьи по номеру (числовая сортировка)
+        def article_sort_key(art):
+            try:
+                return float(art.article_number)
+            except:
+                return 99999
+        
+        all_articles.sort(key=article_sort_key)
+        
+        article_ids = [f"art-{a.article_number}" for a in all_articles]
+        current_id = f"art-{article.article_number}"
+        
+        try:
+            idx = article_ids.index(current_id)
+            prev_id = article_ids[idx - 1] if idx > 0 else None
+            next_id = article_ids[idx + 1] if idx < len(article_ids) - 1 else None
+        except ValueError:
+            prev_id = next_id = None
+        
+        # Получаем TOC
+        toc_data = get_law_index()
+        
+        return {
+            "title": law_version.law_name,
+            "meta": "",
+            "article": {
+                "id": current_id,
+                "heading": article.title,
+                "chapter": "",
+                "paragraphs": paragraphs,
+                "prev_id": prev_id,
+                "next_id": next_id,
+                "source_url": article.source_url,
+            },
+            "toc": toc_data.get("toc", []),
+        }
+        
+    finally:
+        db.close()
 
 
 def search_laws(q: str | None = None) -> list[dict]:
-    """Поиск по статьям закона."""
+    """Поиск по статьям закона (из БД с full-text search)."""
     if not q:
         return []
     
-    ql = q.strip().lower()
-    results = []
+    db = SessionLocal()
+    repo = LawRepository(db)
     
-    for ch in _TOC:
-        for item in ch["items"]:
-            # Поиск по заголовку статьи
-            if ql in item["title"].lower() or ql in ch["chapter"].lower():
-                results.append({
-                    "id": item["id"],
-                    "title": item["title"],
-                    "chapter": ch["chapter"],
-                })
-    
-    return results
+    try:
+        # Получаем активную версию
+        law_version = repo.get_active_version(LAW_CODE)
+        
+        if not law_version:
+            # Fallback на заглушку
+            ql = q.strip().lower()
+            results = []
+            for ch in _TOC:
+                for item in ch["items"]:
+                    if ql in item["title"].lower() or ql in ch["chapter"].lower():
+                        results.append({
+                            "id": item["id"],
+                            "title": item["title"],
+                            "chapter": ch["chapter"],
+                        })
+            return results
+        
+        # Поиск в БД через репозиторий
+        articles = repo.search_articles(law_version.id, q, limit=20)
+        
+        results = []
+        for article in articles:
+            results.append({
+                "id": f"art-{article.article_number}",
+                "title": article.title,
+                "chapter": "",
+            })
+        
+        return results
+        
+    finally:
+        db.close()
