@@ -62,7 +62,7 @@ def make_report_from_input(text: str | None, claims: list[str] | None = None, me
 
     ring_color = "#ef4444" if has_violations else "#22c55e"
     ring_deg = 360.0
-    ring_label = "BAD" if has_violations else "GOOD"
+    ring_label = "Да" if has_violations else "Нет"
 
     # Дата проверки и информация о законе (из БД)
     check_date = datetime.now()
