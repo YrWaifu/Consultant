@@ -22,6 +22,9 @@ python manage.py parse-law
 # Ручной запуск парсера
 docker-compose exec api python manage.py parse-law
 
+# Очистить кеш редиса
+docker-compose exec redis redis-cli FLUSHALL
+
 # Пример очистки бд 
 docker-compose exec db psql -U postgres -d adlaw -c "DELETE FROM law_articles; DELETE FROM law_chapters; DELETE FROM law_versions;"   
 ```

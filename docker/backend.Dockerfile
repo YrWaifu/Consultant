@@ -5,9 +5,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Системные зависимости
+# Системные зависимости и шрифты с поддержкой кириллицы
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential gcc curl \
+    fontconfig fonts-dejavu fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 # Зависимости

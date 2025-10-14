@@ -10,6 +10,7 @@ from ..services.account_stub import (
 )
 from ..services.history_stub import list_history
 from ..services.stats_stub import get_stats
+from ..services.pdf_generator import generate_pdf_report
 from ..workers.queue import queue, process_ad_check_task
 
 router = APIRouter()
@@ -143,6 +144,7 @@ async def check_result_page(request: Request, job_id: str):
         
         if job.is_finished:
             data = job.result
+            data["job_id"] = job_id  # Передаем job_id в шаблон для PDF ссылки
             return templates.TemplateResponse("pages/check_report_v2.html", {"request": request, **data})
         else:
             # Если задача еще не завершена, перенаправляем на страницу ожидания
@@ -153,7 +155,31 @@ async def check_result_page(request: Request, job_id: str):
         return RedirectResponse(url="/v2/check", status_code=303)
 
 
-# PDF генерация убрана - теперь используется только реальная асинхронная обработка
+@router.get("/v2/check/result/{job_id}/pdf", name="web_v2_check_result_pdf")
+async def check_result_pdf(job_id: str):
+    """Скачивание PDF отчета"""
+    try:
+        from rq.job import Job
+        from ..workers.queue import redis
+        
+        job = Job.fetch(job_id, connection=redis)
+        
+        if job.is_finished:
+            data = job.result
+            pdf_bytes = generate_pdf_report(data)
+            
+            headers = {
+                "Content-Disposition": f"attachment; filename=report_{job_id[:8]}.pdf",
+                "Content-Type": "application/pdf",
+            }
+            return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
+        else:
+            # Если задача еще не завершена, перенаправляем на страницу ожидания
+            return RedirectResponse(url=f"/v2/check/status/{job_id}", status_code=303)
+            
+    except Exception:
+        # Если задача не найдена, перенаправляем на главную
+        return RedirectResponse(url="/v2/check", status_code=303)
 
 
 @router.get("/v2/account", response_class=HTMLResponse, name="web_v2_account")
