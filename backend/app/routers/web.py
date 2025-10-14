@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Request, Form, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, Response, JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from ..services.news_stub import list_news, get_news_detail
-from ..services.report_stub import make_report_from_input, make_report_pdf_bytes
 from ..services.laws_stub import get_law_index, get_article, search_laws
 from ..services.account_stub import (
     get_account, update_account,
@@ -11,6 +10,7 @@ from ..services.account_stub import (
 )
 from ..services.history_stub import list_history
 from ..services.stats_stub import get_stats
+from ..workers.queue import queue, process_ad_check_task
 
 router = APIRouter()
 templates = Jinja2Templates(directory="backend/app/templates")
@@ -62,27 +62,98 @@ async def check_submit(
     claims: list[str] | None = Form(None),
     file: UploadFile | None = File(None),
 ):
-    data = make_report_from_input(text=text, claims=claims, media_path=None)
-    return templates.TemplateResponse("pages/check_report_v2.html", {"request": request, **data})
+    # Создаем фоновую задачу для обработки ML модели
+    job = queue.enqueue(process_ad_check_task, text, None)
+    
+    # Перенаправляем на страницу ожидания с ID задачи
+    return RedirectResponse(url=f"/v2/check/status/{job.id}", status_code=303)
 
 
-@router.get("/v2/report", response_class=HTMLResponse, name="web_v2_report")
-async def report_page(request: Request, case: str | None = None):
-    data = make_report(case or "bad")
-    return templates.TemplateResponse(
-        "pages/check_report_v2.html",
-        {"request": request, **data}
-    )
+@router.get("/v2/check/status/{job_id}", response_class=HTMLResponse, name="web_v2_check_status")
+async def check_status_page(request: Request, job_id: str):
+    """Страница ожидания результата проверки"""
+    return templates.TemplateResponse("pages/check_status_v2.html", {
+        "request": request, 
+        "job_id": job_id
+    })
 
 
-@router.get("/v2/report.pdf", name="web_v2_report_pdf")
-async def report_pdf_download(case: str | None = None):
-    pdf_bytes = make_report_pdf_bytes(case or "bad")
-    headers = {
-        "Content-Disposition": "attachment; filename=report.pdf",
-        "Content-Type": "application/pdf",
-    }
-    return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
+@router.get("/api/v2/check/status/{job_id}", name="api_v2_check_status")
+async def check_status_api(job_id: str):
+    """API для проверки статуса задачи"""
+    try:
+        from rq.job import Job
+        from ..workers.queue import redis
+        
+        print(f"🔍 Проверяем статус задачи: {job_id}")
+        
+        job = Job.fetch(job_id, connection=redis)
+        print(f"📝 Статус задачи: {job.get_status()}")
+        
+        if job.is_finished:
+            print("✅ Задача завершена успешно")
+            
+            # Дополнительная защита: преобразуем любые datetime объекты в строки
+            result = job.result
+            if isinstance(result, dict):
+                def serialize_dates(obj):
+                    if isinstance(obj, dict):
+                        return {k: serialize_dates(v) for k, v in obj.items()}
+                    elif isinstance(obj, list):
+                        return [serialize_dates(item) for item in obj]
+                    elif hasattr(obj, 'isoformat'):  # datetime, date объекты
+                        return obj.isoformat()
+                    else:
+                        return obj
+                
+                result = serialize_dates(result)
+            
+            return JSONResponse({
+                "status": "completed",
+                "result": result
+            })
+        elif job.is_failed:
+            print(f"❌ Задача провалилась: {job.exc_info}")
+            return JSONResponse({
+                "status": "failed", 
+                "error": str(job.exc_info)
+            })
+        else:
+            print("⏳ Задача еще выполняется")
+            return JSONResponse({
+                "status": "processing"
+            })
+            
+    except Exception as e:
+        print(f"🚨 Ошибка при проверке статуса: {e}")
+        return JSONResponse({
+            "status": "error",
+            "error": f"Задача не найдена: {str(e)}"
+        }, status_code=200)  # Изменяем на 200, чтобы JS мог обработать ответ
+
+
+@router.get("/v2/check/result/{job_id}", response_class=HTMLResponse, name="web_v2_check_result")
+async def check_result_page(request: Request, job_id: str):
+    """Страница с результатом проверки"""
+    try:
+        from rq.job import Job
+        from ..workers.queue import redis
+        
+        job = Job.fetch(job_id, connection=redis)
+        
+        if job.is_finished:
+            data = job.result
+            return templates.TemplateResponse("pages/check_report_v2.html", {"request": request, **data})
+        else:
+            # Если задача еще не завершена, перенаправляем на страницу ожидания
+            return RedirectResponse(url=f"/v2/check/status/{job_id}", status_code=303)
+            
+    except Exception:
+        # Если задача не найдена, перенаправляем на главную
+        return RedirectResponse(url="/v2/check", status_code=303)
+
+
+# PDF генерация убрана - теперь используется только реальная асинхронная обработка
 
 
 @router.get("/v2/account", response_class=HTMLResponse, name="web_v2_account")
