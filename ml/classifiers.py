@@ -37,12 +37,13 @@ def get_questions_answers(ad_text: str) -> list:
     """
 
     client = InferenceClient(
-        token=os.environ["HF_TOKEN"]
+        token=os.environ["HF_TOKEN"],
+        provider='novita'
     )
 
     # Отправка запроса
     response = client.chat.completions.create(
-        model="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+        model=os.environ["MODEL_TEXT"],
         messages=[
             {
                 "role": "user",
