@@ -3,3 +3,5 @@
 .idea
 node_modules
 backend/app/static/css/build.css
+__pycache__/
+*.py[cod]
