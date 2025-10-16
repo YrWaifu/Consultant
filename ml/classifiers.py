@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import requests
 from huggingface_hub import InferenceClient
 from collections import defaultdict
 
@@ -10,11 +11,6 @@ from dictionaries import *
 Модуль поиска нарушений в текстовой рекламе
 """
 
-client = InferenceClient(
-    model=os.environ["MODEL"],
-    token=os.environ["HF_TOKEN"]
-)
-
 
 def form_prompt(ad_text: str) -> str:
     """
@@ -23,30 +19,30 @@ def form_prompt(ad_text: str) -> str:
     :return: str - текст запроса к LLM
     """
 
-    return f"""
-            Ты — эксперт по законодательству о рекламе РФ.
-            Анализируй текст рекламы и ответь на каждый вопрос "ДА" или "НЕТ". Если ответ "ДА", добавь рекомендацию по исправлению этого нарушения.
-            Формат ответа — JSON-список вида:
-            {{"вопрос": "...", "ответ": "ДА/НЕТ", "рекомендация": "..."}}
-
-            Текст рекламы:
-            {ad_text}
-
-            Вопросы:
-            {list(QUESTIONS_TO_ARTICLES.keys())}
-        """
+    return f'''
+        Ты — эксперт по законодательству о рекламе Российской Федерации. Проанализируй текст рекламы и ответь на каждый вопрос строго «ДА» или «НЕТ». 
+        Если ответ «ДА», обязательно добавь краткую рекомендацию, как устранить нарушение. Если нарушение отсутствует, ответь «НЕТ» без рекомендации.
+        Руководствуйся пояснениями к каждому вопросу, чтобы не путать похожие вопросы. Обрати внимание, что есть вопросы на одну тему, но в каждом вопросе своя специфика.
+        Формат ответа — JSON-список вида: {{"номер вопроса": "int", "ответ": "ДА/НЕТ", "рекомендация": "..."}}
+        Текст рекламы: {ad_text}
+        Вопросы с пояснениями: {' '.join([f'{n}. {q_text}' for n, q_text in QUESTIONS.items()])}
+    '''
 
 
 def get_questions_answers(ad_text: str) -> list:
     """
     Классификация нарушений в тексте рекламы по вопросам
     :param ad_text: текст рекламы
-    :return: list вида [{"вопрос": "...", "ответ": "ДА/НЕТ", "рекомендация": "..."}]
+    :return: list вида [{"номер вопроса": "...", "ответ": "ДА/НЕТ", "рекомендация": "..."}]
     """
+
+    client = InferenceClient(
+        token=os.environ["HF_TOKEN"]
+    )
 
     # Отправка запроса
     response = client.chat.completions.create(
-        model=os.environ["MODEL"],
+        model="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
         messages=[
             {
                 "role": "user",
@@ -69,13 +65,13 @@ def get_questions_answers(ad_text: str) -> list:
     # Убираем некорректные вопросы
     correct_data = []
     for item in data:
-        if all(k in item for k in ("вопрос", "ответ", "рекомендация")) \
-                and item['вопрос'] in QUESTIONS_TO_ARTICLES:
+        if all(k in item for k in ("номер вопроса", "ответ", "рекомендация")) \
+                and item['номер вопроса'] in QUESTIONS:
             correct_data.append(item)
     return correct_data
 
 
-def check_legislation(ad_text: str) -> list:
+def analyze_text(ad_text: str) -> list:
     """
     Поиск нарушений 5 статьи ФЗ в тексте рекламы
     :param ad_text: текст рекламы
@@ -98,7 +94,7 @@ def check_legislation(ad_text: str) -> list:
     for item in data:
         # Отбираем только нарушения
         if item["ответ"] == "ДА":
-            question = item["вопрос"]
+            question = item["номер вопроса"]
             article = QUESTIONS_TO_ARTICLES.get(question)
             if article:
                 article_to_recs[article].append(item["рекомендация"])
@@ -122,3 +118,34 @@ def check_legislation(ad_text: str) -> list:
 
     return result
 
+
+def analyze_audio(audio: bytes, mime_type: str) -> list:
+    """
+    Поиск нарушений 5 статьи ФЗ в аудио рекламе
+    :param audio: аудио в байтах
+    :param mime_type: тип аудио ('audio/mpeg', 'audio/flac', 'audio/wav' или другой)
+    :return: list - список нарушений вида ["N часть 5 статьи ФЗ": {
+                "text": "текст N части 5 статьи ФЗ",
+                "recommendations": "сгенерированные рекомендации",
+                "judicial_proceedings": "сопутствующие дела из судебной практики"
+            }]
+    """
+    assert mime_type in ['audio/mpeg', 'audio/flac', 'audio/wav', 'audio/webm', 'audio/ogg', 'audio/mp4', 'audio/m4a',
+                         'audio/amr'], ValueError('got incorrect audio type')
+
+    headers = {
+        "Authorization": f"Bearer {os.environ['HF_TOKEN']}",
+    }
+
+    response = requests.post(os.environ["AUDIO_API_URL"], headers={"Content-Type": mime_type, **headers}, data=audio)
+
+    # Преобразование в json
+    try:
+        response = response.json()
+    # Ошибка преобразования в json
+    except json.JSONDecodeError:
+        print('Could not convert to json response from HF')
+        return []
+
+    ad_text = response['text']
+    return analyze_text(ad_text)
