@@ -5,8 +5,18 @@
 {% block content %}
 
 <h1 class="text-center text-2xl font-semibold">
-    {{ title }}<br><span class="text-neutral-600 text-xl">{{ meta }}</span>
+    {{ title }}{% if meta %}<br><span class="text-neutral-600 text-xl">{{ meta }}</span>{% endif %}
 </h1>
+
+<p class="text-center text-sm text-neutral-600 mt-3">
+    Данные получены с сайта 
+    <a href="https://www.consultant.ru/document/cons_doc_LAW_58968/" 
+       target="_blank" 
+       rel="noopener noreferrer"
+       class="text-rose-600 hover:underline">
+        КонсультантПлюс
+    </a>
+</p>
 
 <div class="mt-6 rounded-2xl border border-rose-400 bg-white p-5">
     <div class="space-y-6">

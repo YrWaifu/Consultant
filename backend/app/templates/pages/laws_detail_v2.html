@@ -7,7 +7,7 @@
     class="inline-flex items-center gap-2 text-neutral-700 hover:text-neutral-900 mb-4">←</a>
 
 <h1 class="text-center text-2xl font-semibold">
-    {{ title }}<br><span class="text-neutral-600 text-xl">{{ meta }}</span>
+    {{ title }}{% if meta %}<br><span class="text-neutral-600 text-xl">{{ meta }}</span>{% endif %}
 </h1>
 
 <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -15,11 +15,23 @@
     <article class="lg:col-span-2 rounded-2xl border border-rose-400 bg-white p-5">
         <h2 class="text-rose-700 text-xl font-semibold mb-3">{{ article.heading }}</h2>
 
-        <div class="space-y-4 text-neutral-800 leading-relaxed">
+        <div class="text-neutral-800 leading-relaxed law-content">
             {% for p in article.paragraphs %}
-            <p>{{ p }}</p>
+                {{ p|safe }}
             {% endfor %}
         </div>
+
+        {% if article.source_url %}
+        <p class="text-xs text-neutral-500 mt-4 pt-4 border-t border-neutral-200">
+            Источник: 
+            <a href="{{ article.source_url }}" 
+               target="_blank" 
+               rel="noopener noreferrer"
+               class="text-rose-600 hover:underline">
+                КонсультантПлюс
+            </a>
+        </p>
+        {% endif %}
 
         <div class="mt-6 flex justify-between text-sm text-neutral-700">
             <div>
@@ -44,4 +56,42 @@
         </div>
     </div>
 </div>
+
+<script>
+// Подсветка найденного слова из поиска
+(function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const highlight = urlParams.get('highlight');
+    
+    if (highlight && highlight.trim()) {
+        const content = document.querySelector('.law-content');
+        if (content) {
+            const text = content.innerHTML;
+            const regex = new RegExp(`(${highlight.trim()})`, 'gi');
+            const highlighted = text.replace(regex, '<mark class="highlight-search">$1</mark>');
+            content.innerHTML = highlighted;
+            
+            // Прокрутить к первому найденному слову
+            const firstMark = content.querySelector('mark.highlight-search');
+            if (firstMark) {
+                firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            // Убрать подсветку через 5 секунд
+            setTimeout(() => {
+                document.querySelectorAll('mark.highlight-search').forEach(mark => {
+                    mark.classList.add('fade-out');
+                });
+                
+                setTimeout(() => {
+                    document.querySelectorAll('mark.highlight-search').forEach(mark => {
+                        const text = mark.textContent;
+                        mark.replaceWith(text);
+                    });
+                }, 1000);
+            }, 5000);
+        }
+    }
+})();
+</script>
 {% endblock %}

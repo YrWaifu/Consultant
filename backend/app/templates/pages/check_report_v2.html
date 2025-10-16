@@ -12,6 +12,29 @@
     Результаты проверки носят <span class="text-rose-600 font-medium">рекомендательный характер</span>
 </p>
 
+<!-- Юридическая информация о проверке -->
+<div class="bg-blue-50 border border-blue-200 rounded-lg px-5 py-4 mb-6">
+    <h3 class="font-semibold text-blue-900 mb-3">Информация о проверке</h3>
+    <div class="space-y-2 text-sm text-blue-900">
+        <div>
+            <span class="font-medium">Дата проверки:</span> 
+            {{ check_date_formatted }}
+        </div>
+        <div>
+            <span class="font-medium">Закон:</span> 
+            {{ law_name }}
+        </div>
+        <div class="mt-3 pt-3 border-t border-blue-200">
+            <span class="font-medium">Статус:</span> 
+            {% if is_ok %}
+                <span class="text-emerald-600 font-semibold">Реклама соответствует законодательству на дату проверки {{ check_date_short }}</span>
+            {% else %}
+                <span class="text-rose-600 font-semibold">Реклама не соответствует законодательству на дату проверки {{ check_date_short }}</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
     <!-- Кольцо -->
     <div class="flex flex-col items-center md:items-start">
@@ -45,14 +68,14 @@
 </div>
 {% endif %}
 
-{% if marked_violations|length %}
+<!-- {% if marked_violations|length %}
 <h2 class="text-xl font-semibold mt-10 mb-4">Отмеченные нарушения из Федерального закона «О рекламе»</h2>
 <div class="space-y-5">
     {% for v in marked_violations %}
     {% include 'components/violation_card.html' %}
     {% endfor %}
 </div>
-{% endif %}
+{% endif %} -->
 
 {% if cases|length %}
 <h2 class="text-xl font-semibold mt-10 mb-4">Похожие случаи из судебной практики</h2>
@@ -68,9 +91,11 @@
     </article>
     {% endfor %}
 </div>
-{% else %}
+{% endif %}
+
+{% if is_ok %}
 <div class="mt-10 text-center text-2xl font-bold">
-    Реклама <span style="color: {{ ring_color }};">полностью соответствует</span> законодательству!
+    Реклама <span class="text-emerald-600">полностью соответствует</span> законодательству!
 </div>
 {% endif %}
 
@@ -79,10 +104,17 @@
 {% endif %}
 
 <div class="text-center mt-6">
-    <a href="#"
+    {% if job_id %}
+    <a href="{{ url_for('web_v2_check_result_pdf', job_id=job_id) }}"
         class="inline-flex items-center justify-center rounded-full bg-rose-600 px-8 py-3 text-white text-lg hover:bg-rose-700">
         Скачать PDF-отчёт
     </a>
+    {% else %}
+    <button disabled
+        class="inline-flex items-center justify-center rounded-full bg-gray-400 px-8 py-3 text-white text-lg cursor-not-allowed">
+        Скачать PDF-отчёт
+    </button>
+    {% endif %}
 </div>
 
 <p class="text-center text-neutral-700 mt-4">

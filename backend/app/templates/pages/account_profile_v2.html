@@ -13,39 +13,16 @@
     <div class="col-span-12 md:col-span-8">
         <form action="{{ url_for('web_v2_account_submit') }}" method="post" enctype="multipart/form-data"
             class="rounded-2xl border border-neutral-200 bg-white p-6">
-            <div class="grid grid-cols-12 gap-6">
-                <div class="col-span-12 md:col-span-7 space-y-4">
-                    <div>
-                        <label class="block text-sm text-neutral-600 mb-1">Как к вам обращаться?</label>
-                        <input name="last_name" value="{{ account['last_name'] }}"
-                            class="w-full rounded-xl border-neutral-300 focus:border-rose-400 focus:ring-rose-300" />
-                    </div>
-                    <!-- <div>
-                        <label class="block text-sm text-neutral-600 mb-1">Имя</label>
-                        <input name="first_name" value="{{ account['first_name'] }}"
-                            class="w-full rounded-xl border-neutral-300 focus:border-rose-400 focus:ring-rose-300" />
-                    </div> -->
-                    <div>
-                        <label class="block text-sm text-neutral-600 mb-1">Email</label>
-                        <input type="email" name="email" value="{{ account['email'] }}"
-                            class="w-full rounded-xl border-neutral-300 focus:border-rose-400 focus:ring-rose-300" />
-                    </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-neutral-600 mb-1">Как к вам обращаться?</label>
+                    <input name="last_name" value="{{ account['last_name'] }}"
+                        class="w-full rounded-xl border-neutral-300 focus:border-rose-400 focus:ring-rose-300" />
                 </div>
-
-                <div class="col-span-12 md:col-span-5">
-                    <div class="text-center mb-2 font-medium">Фотография профиля</div>
-                    <div class="flex flex-col items-center gap-4">
-                        <div class="w-36 h-36 rounded-full bg-neutral-200 overflow-hidden ring-1 ring-neutral-200">
-                            {% if account['avatar_url'] %}
-                            <img src="{{ account['avatar_url'] }}" alt="avatar" class="w-full h-full object-cover" />
-                            {% endif %}
-                        </div>
-                        <input id="avatar-input" type="file" name="avatar" accept="image/*" class="hidden">
-                        <label for="avatar-input" + class="inline-flex items-center justify-center px-4 py-2 rounded-full
-                    bg-rose-100 text-rose-700 hover:bg-rose-200 cursor-pointer">
-                            Загрузить
-                        </label>
-                    </div>
+                <div>
+                    <label class="block text-sm text-neutral-600 mb-1">Email</label>
+                    <input type="email" name="email" value="{{ account['email'] }}"
+                        class="w-full rounded-xl border-neutral-300 focus:border-rose-400 focus:ring-rose-300" />
                 </div>
             </div>
 
