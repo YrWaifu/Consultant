@@ -125,7 +125,7 @@ def process_ad_check_task(text: str | None, media_path: str | None):
                 law_name = law_version.law_name
                 law_version_date = law_version.version_date
             else:
-                law_name = "Федеральный закон от 13.03.2006 N 38-ФЗ «О рекламе»"
+                law_name = "Федеральный закон \"О рекламе\" от 13.03.2006 N 38-ФЗ (последняя редакция)"
                 law_version_date = date(2024, 10, 1)
         finally:
             db.close()

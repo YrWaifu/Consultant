@@ -18,7 +18,7 @@ from ..repositories.law_repository import LawRepository
 
 # Константы
 LAW_BASE_URL = "https://www.consultant.ru/document/cons_doc_LAW_58968/"
-LAW_NAME = "Федеральный закон от 13.03.2006 N 38-ФЗ «О рекламе»"
+LAW_NAME = "Федеральный закон \"О рекламе\" от 13.03.2006 N 38-ФЗ (последняя редакция)"
 LAW_CODE = "38-FZ"
 
 SESSION = requests.Session()
@@ -356,11 +356,11 @@ def extract_law_metadata(html: str) -> Dict:
     
     if title_el:
         title_text = title_el.get_text(strip=True)
-        # Убираем "(последняя редакция)"
-        law_name = re.sub(r'\s*\(последняя редакция\)\s*$', '', title_text)
+        # Сохраняем полное название включая "(последняя редакция)"
+        law_name = title_text
         
         # Извлекаем дату из названия: "Федеральный закон "О рекламе" от 13.03.2006 N 38-ФЗ"
-        date_match = re.search(r'от\s+(\d{2}\.\d{2}\.\d{4})', law_name)
+        date_match = re.search(r'от\s+(\d{2}\.\d{2}\.\d{4})', title_text)
         if date_match:
             try:
                 law_date = datetime.strptime(date_match.group(1), '%d.%m.%Y').date()
