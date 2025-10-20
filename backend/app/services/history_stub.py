@@ -1,33 +1,45 @@
 from __future__ import annotations
 from datetime import datetime, timedelta
-from typing import List, Dict
+from typing import List, Dict, Optional
+from sqlalchemy.orm import Session
+from ..repositories import CheckRepository
 
 
-def _mk_item(title: str, days_ago: int, result: str, report_url: str | None = None, pdf_url: str | None = None) -> Dict:
-    dt = datetime.now() - timedelta(days=days_ago)
-    if result == "ok":
-        badge_class, badge_text = "bg-green-100 text-green-700", "OK"
-    elif result == "warn":
-        badge_class, badge_text = "bg-amber-100 text-amber-700", "Есть замечания"
-    else:
-        badge_class, badge_text = "bg-rose-100 text-rose-700", "Нарушения"
-    return {
-        "date": dt.strftime("%Y-%m-%d %H:%M"),
-        "title": title,
-        "summary": None,
-        "badge_class": badge_class,
-        "badge_text": badge_text,
-        "report_url": report_url,
-        "pdf_url": pdf_url,
-    }
-
-
-def list_history() -> List[Dict]:
-    """Заглушка истории проверок для демо UI."""
-    return [
-        _mk_item("Промо‑пост про скидки", 1, "bad", "/v2/report?case=bad", "/v2/report.pdf?case=bad"),
-        _mk_item("Текст баннера для сайта", 3, "warn", "/v2/report?case=medium", "/v2/report.pdf?case=medium"),
-        _mk_item("Анонс вебинара", 10, "ok", "/v2/report?case=good", "/v2/report.pdf?case=good"),
-    ]
+def list_history(user_id: Optional[int] = None, db: Optional[Session] = None) -> List[Dict]:
+    """Получить историю проверок пользователя"""
+    if not user_id or not db:
+        # Возвращаем пустой список если нет пользователя
+        return []
+    
+    check_repo = CheckRepository(db)
+    checks = check_repo.get_user_checks(user_id, limit=50)
+    
+    result = []
+    for check in checks:
+        # Определяем статус по результатам
+        is_ok = check.result.get('is_ok', False) if check.result else False
+        violations_count = len(check.result.get('violations', [])) if check.result else 0
+        
+        if is_ok:
+            badge_text = "Нарушний не обнаружено"
+            badge_class = "bg-emerald-100 text-emerald-700"
+        elif violations_count > 3:
+            badge_text = "Нарушения"
+            badge_class = "bg-rose-100 text-rose-700"
+        else:
+            badge_text = "Предупреждения"
+            badge_class = "bg-amber-100 text-amber-700"
+        
+        result.append({
+            "id": check.id,
+            "date": check.created_at.strftime("%d.%m.%Y %H:%M"),
+            "title": check.input_text[:50] + "..." if check.input_text and len(check.input_text) > 50 else check.input_text or "Проверка",
+            "summary": check.summary or "Результаты проверки",
+            "badge_text": badge_text,
+            "badge_class": badge_class,
+            "pdf_url": f"/v2/check/history/{check.id}/pdf" if check.result else None
+        })
+    
+    return result
 
 

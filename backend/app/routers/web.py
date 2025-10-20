@@ -9,7 +9,7 @@ from ..services.account_stub import (
     get_account, update_account,
     get_subscription, start_subscription, cancel_subscription,
 )
-from ..repositories import SubscriptionRepository
+from ..repositories import SubscriptionRepository, CheckRepository
 from ..services.history_stub import list_history
 from ..services.stats_stub import get_stats
 from ..services.pdf_generator import generate_pdf_report
@@ -158,8 +158,18 @@ async def check_submit(
     # Увеличиваем счетчик использованных проверок
     subscription_repo.increment_checks(subscription)
     
+    # Создаем запись о проверке в БД
+    check_repo = CheckRepository(db)
+    check = check_repo.create(
+        user_id=current_user.id,
+        input_text=text,
+        input_media_path=None,  # TODO: обработка файлов
+        status="queued"
+    )
+    
     # Создаем фоновую задачу для обработки ML модели
-    job = queue.enqueue(process_ad_check_task, text, None)
+    # Передаем check_id для сохранения результата
+    job = queue.enqueue(process_ad_check_task, text, None, check.id)
     
     # Перенаправляем на страницу ожидания с ID задачи
     return RedirectResponse(url=f"/v2/check/status/{job.id}", status_code=303)
@@ -363,7 +373,7 @@ async def account_history(request: Request, db: Session = Depends(get_db)):
         )
     
     account = get_account(current_user)
-    items = list_history()
+    items = list_history(current_user.id, db)
     return templates.TemplateResponse(
         "pages/account_history_v2.html",
         get_template_context(request, db, tab="history", account=account, items=items),
@@ -390,7 +400,7 @@ async def account_stats(request: Request, db: Session = Depends(get_db)):
         )
     
     account = get_account(current_user)
-    stats = get_stats()
+    stats = get_stats(current_user.id, db)
     return templates.TemplateResponse(
         "pages/account_stats_v2.html",
         get_template_context(request, db, tab="stats", account=account, stats=stats),
@@ -423,6 +433,36 @@ async def buy_checks(request: Request, db: Session = Depends(get_db)):
     
     # Перенаправляем на страницу подписки с сообщением об успехе
     return RedirectResponse(url="/v2/account/subscription?purchased=1", status_code=303)
+
+
+@router.get("/v2/check/history/{check_id}/pdf", name="web_v2_history_pdf")
+async def history_check_pdf(check_id: int, request: Request, db: Session = Depends(get_db)):
+    """Скачивание PDF из истории проверок"""
+    current_user = get_current_user_from_cookie(request, db)
+    
+    if not current_user:
+        return RedirectResponse(url="/v2/auth/login", status_code=303)
+    
+    # Получаем проверку из БД
+    check_repo = CheckRepository(db)
+    check = check_repo.get_by_id(check_id)
+    
+    # Проверяем что проверка принадлежит пользователю
+    if not check or check.user_id != current_user.id:
+        return RedirectResponse(url="/v2/account/history", status_code=303)
+    
+    # Проверяем что есть результаты
+    if not check.result:
+        return RedirectResponse(url="/v2/account/history", status_code=303)
+    
+    # Генерируем PDF из сохраненного результата
+    pdf_bytes = generate_pdf_report(check.result)
+    
+    headers = {
+        "Content-Disposition": f"attachment; filename=check_{check_id}.pdf",
+        "Content-Type": "application/pdf",
+    }
+    return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
 
 
 # ============ AUTH ROUTES ============

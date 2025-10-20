@@ -5,5 +5,6 @@ Repository layer - низкоуровневая работа с БД (CRUD оп�
 
 from .user_repository import UserRepository
 from .subscription_repository import SubscriptionRepository
+from .check_repository import CheckRepository
 
-__all__ = ["UserRepository", "SubscriptionRepository"]
+__all__ = ["UserRepository", "SubscriptionRepository", "CheckRepository"]
