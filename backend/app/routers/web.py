@@ -63,8 +63,16 @@ async def check_submit(
     claims: list[str] | None = Form(None),
     file: UploadFile | None = File(None),
 ):
+    # Если прикреплен файл, читаем его в байты
+    audio_bytes = None
+    audio_content_type = None
+
+    if file and file.filename:
+        audio_bytes = await file.read()
+        audio_content_type = file.content_type
+
     # Создаем фоновую задачу для обработки ML модели
-    job = queue.enqueue(process_ad_check_task, text, None)
+    job = queue.enqueue(process_ad_check_task, text, audio_bytes, audio_content_type)
     
     # Перенаправляем на страницу ожидания с ID задачи
     return RedirectResponse(url=f"/v2/check/status/{job.id}", status_code=303)
