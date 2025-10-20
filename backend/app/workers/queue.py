@@ -149,6 +149,7 @@ def process_ad_check_task(text: str | None, media_path: str | None):
             "check_date_short": check_date_short,    # Короткая версия для статуса
             "law_name": law_name,
             "law_version_date": law_version_date.isoformat() if hasattr(law_version_date, 'isoformat') else str(law_version_date),
+            "input_text": text,  # Исходный текст рекламы
         }
         
         print("🎉 Отчет сформирован успешно!")
