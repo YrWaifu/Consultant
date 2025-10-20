@@ -4,6 +4,24 @@
 
 {% block content %}
 <div class="max-w-3xl mx-auto">
+    <!-- Индикатор квоты проверок -->
+    {% if checks_remaining is defined %}
+    <div class="mb-4 p-3 rounded-lg border {{ 'bg-amber-50 border-amber-200' if checks_remaining < 10 else 'bg-blue-50 border-blue-200' }}">
+        <div class="flex items-center justify-between">
+            <span class="text-sm font-medium {{ 'text-amber-900' if checks_remaining < 10 else 'text-blue-900' }}">
+                Доступно проверок: {{ checks_remaining }} из {{ checks_quota }}
+            </span>
+            <a href="{{ url_for('web_v2_account_subscription') }}" 
+               class="text-xs {{ 'text-amber-700 hover:text-amber-800' if checks_remaining < 10 else 'text-blue-700 hover:text-blue-800' }} underline">
+                Докупить
+            </a>
+        </div>
+        {% if checks_remaining < 10 %}
+        <p class="text-xs text-amber-700 mt-1">⚠️ У вас осталось мало проверок</p>
+        {% endif %}
+    </div>
+    {% endif %}
+    
     <p class="text-sm text-neutral-500 mb-4">
         Можете ввести слоган, текст, сценарий для видео или описать рекламу своими словами
     </p>

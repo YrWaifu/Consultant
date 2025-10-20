@@ -75,4 +75,11 @@ class SubscriptionRepository:
         self.db.commit()
         self.db.refresh(subscription)
         return subscription
+    
+    def add_checks(self, subscription: Subscription, amount: int = 30) -> Subscription:
+        """Добавить дополнительные проверки к квоте"""
+        subscription.checks_quota += amount
+        self.db.commit()
+        self.db.refresh(subscription)
+        return subscription
 

@@ -61,7 +61,14 @@ async def index(request: Request, db: Session = Depends(get_db)):
         # Подписка истекла или отсутствует
         return templates.TemplateResponse("pages/check_no_access_v2.html", get_template_context(request, db))
     
-    return templates.TemplateResponse("pages/check_v2.html", get_template_context(request, db))
+    # Передаем информацию о квоте
+    return templates.TemplateResponse("pages/check_v2.html", 
+        get_template_context(request, db, 
+            checks_used=subscription.checks_used,
+            checks_quota=subscription.checks_quota,
+            checks_remaining=subscription.checks_quota - subscription.checks_used
+        )
+    )
 
 
 @router.get("/v2/news", response_class=HTMLResponse, name="web_v2_news")
@@ -110,7 +117,14 @@ async def check_page(request: Request, db: Session = Depends(get_db)):
         # Подписка истекла или отсутствует
         return templates.TemplateResponse("pages/check_no_access_v2.html", get_template_context(request, db))
     
-    return templates.TemplateResponse("pages/check_v2.html", get_template_context(request, db))
+    # Передаем информацию о квоте
+    return templates.TemplateResponse("pages/check_v2.html", 
+        get_template_context(request, db, 
+            checks_used=subscription.checks_used,
+            checks_quota=subscription.checks_quota,
+            checks_remaining=subscription.checks_quota - subscription.checks_used
+        )
+    )
 
 
 @router.post("/v2/check", response_class=HTMLResponse, name="web_v2_check_submit")
@@ -119,7 +133,31 @@ async def check_submit(
     text: str | None = Form(None),
     claims: list[str] | None = Form(None),
     file: UploadFile | None = File(None),
+    db: Session = Depends(get_db),
 ):
+    current_user = get_current_user_from_cookie(request, db)
+    
+    # Проверяем авторизацию и подписку
+    if not current_user:
+        return RedirectResponse(url="/v2/auth/login", status_code=303)
+    
+    subscription_repo = SubscriptionRepository(db)
+    subscription = subscription_repo.get_by_user_id(current_user.id)
+    
+    if not subscription or not subscription_repo.is_active(subscription):
+        return RedirectResponse(url="/v2/account/subscription", status_code=303)
+    
+    # Проверяем доступные проверки
+    if not subscription_repo.has_checks_available(subscription):
+        # Лимит исчерпан - перенаправляем на страницу подписки
+        return templates.TemplateResponse(
+            "pages/check_limit_reached_v2.html",
+            get_template_context(request, db, subscription=subscription)
+        )
+    
+    # Увеличиваем счетчик использованных проверок
+    subscription_repo.increment_checks(subscription)
+    
     # Создаем фоновую задачу для обработки ML модели
     job = queue.enqueue(process_ad_check_task, text, None)
     
@@ -363,6 +401,28 @@ async def subscribe_cancel_route(request: Request):
     cancel_subscription()
     url = str(request.url_for("web_v2_account_subscription")) + "?state=none"
     return RedirectResponse(url=url, status_code=303)
+
+
+@router.post("/v2/buy-checks", name="web_v2_buy_checks")
+async def buy_checks(request: Request, db: Session = Depends(get_db)):
+    """Докупка дополнительных проверок"""
+    current_user = get_current_user_from_cookie(request, db)
+    
+    if not current_user:
+        return RedirectResponse(url="/v2/auth/login", status_code=303)
+    
+    subscription_repo = SubscriptionRepository(db)
+    subscription = subscription_repo.get_by_user_id(current_user.id)
+    
+    if not subscription:
+        return RedirectResponse(url="/v2/account/subscription", status_code=303)
+    
+    # Добавляем 30 проверок
+    # TODO: В будущем здесь будет интеграция с платежной системой
+    subscription_repo.add_checks(subscription, amount=30)
+    
+    # Перенаправляем на страницу подписки с сообщением об успехе
+    return RedirectResponse(url="/v2/account/subscription?purchased=1", status_code=303)
 
 
 # ============ AUTH ROUTES ============

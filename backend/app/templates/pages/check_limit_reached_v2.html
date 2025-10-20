@@ -1,0 +1,41 @@
+{% extends "layouts/base_v2.html" %}
+{% set active = "check" %}
+{% block title %}Лимит проверок исчерпан{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto text-center py-12">
+    <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 p-12">
+        <div class="text-6xl mb-6">📊</div>
+        
+        <h1 class="text-3xl font-bold mb-4">Лимит проверок исчерпан</h1>
+        
+        <p class="text-neutral-600 mb-4">
+            Вы использовали все доступные проверки в текущем месяце.<br>
+            <strong>{{ subscription.checks_used }} из {{ subscription.checks_quota }}</strong> проверок использовано.
+        </p>
+        
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+            <h3 class="font-semibold text-blue-900 mb-3">Как получить больше проверок?</h3>
+            <div class="text-left text-sm text-blue-900 space-y-2">
+                <div>✓ Дождитесь начала следующего месяца - квота обновится автоматически</div>
+                <div>✓ Или докупите дополнительные проверки прямо сейчас</div>
+            </div>
+        </div>
+        
+        <div class="space-y-3">
+            <form method="post" action="{{ url_for('web_v2_buy_checks') }}">
+                <button type="submit"
+                   class="inline-block px-8 py-3 rounded-full bg-rose-600 text-white font-medium hover:bg-rose-700 transition">
+                    Докупить 30 проверок за 100 ₽
+                </button>
+            </form>
+            <br>
+            <a href="{{ url_for('web_v2_account_subscription') }}" 
+               class="inline-block px-6 py-2 text-neutral-600 hover:text-neutral-900">
+                Управление подпиской
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
