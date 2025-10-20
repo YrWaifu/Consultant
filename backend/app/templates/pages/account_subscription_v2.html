@@ -32,7 +32,7 @@
                             Тариф: <b>{{ sub.plan }}</b> · Стоимость: {{ sub.price }}
                         </div>
                         <div class="text-neutral-600">
-                            Следующее списание: <b>{{ sub.renews_at }}</b>
+                            Истекает: <b>{{ sub.expires_at_formatted }}</b> (осталось {{ sub.days_left }} дн.)
                         </div>
                     </div>
                     <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm">

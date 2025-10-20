@@ -1,0 +1,92 @@
+{% extends "layouts/base_v2.html" %}
+{% block title %}Регистрация — ИИ модератор рекламы{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-8">
+    <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 p-8">
+        <h1 class="text-2xl font-bold text-center mb-2">Регистрация</h1>
+        <p class="text-sm text-neutral-500 text-center mb-2">Создайте аккаунт для доступа ко всем функциям</p>
+        <div class="mb-6 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm text-center">
+            🎉 При регистрации вы получаете <strong>7 дней бесплатного доступа!</strong>
+        </div>
+
+        {% if error %}
+        <div class="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form action="{{ url_for('web_v2_register_submit') }}" method="post" class="space-y-4">
+            <!-- Никнейм -->
+            <div>
+                <label for="nickname" class="block text-sm font-medium text-neutral-700 mb-1">
+                    Никнейм
+                </label>
+                <input 
+                    type="text" 
+                    id="nickname" 
+                    name="nickname" 
+                    required
+                    minlength="3"
+                    class="w-full rounded-lg border border-neutral-300 bg-white px-4 py-2.5 outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400"
+                    placeholder="Ваш никнейм"
+                    oninvalid="this.setCustomValidity('Никнейм должен быть минимум 3 символа')"
+                    oninput="this.setCustomValidity('')"
+                >
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-neutral-700 mb-1">
+                    Email
+                </label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    required
+                    class="w-full rounded-lg border border-neutral-300 bg-white px-4 py-2.5 outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400 invalid:border-red-500"
+                    placeholder="your@email.com"
+                    oninvalid="this.setCustomValidity('Введите корректный email адрес (например: name@example.com)')"
+                    oninput="this.setCustomValidity('')"
+                >
+            </div>
+
+            <!-- Пароль -->
+            <div>
+                <label for="password" class="block text-sm font-medium text-neutral-700 mb-1">
+                    Пароль
+                </label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    required
+                    minlength="6"
+                    class="w-full rounded-lg border border-neutral-300 bg-white px-4 py-2.5 outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400"
+                    placeholder="Минимум 6 символов"
+                    oninvalid="this.setCustomValidity('Пароль должен быть минимум 6 символов')"
+                    oninput="this.setCustomValidity('')"
+                >
+            </div>
+
+            <!-- Кнопка регистрации -->
+            <button 
+                type="submit"
+                class="w-full rounded-full bg-rose-600 px-6 py-3 text-white font-medium hover:bg-rose-700 transition"
+            >
+                Зарегистрироваться
+            </button>
+        </form>
+
+        <!-- Ссылка на вход -->
+        <div class="mt-6 text-center text-sm text-neutral-600">
+            Уже есть аккаунт?
+            <a href="{{ url_for('web_v2_login') }}" class="text-rose-600 hover:text-rose-700 font-medium">
+                Войти
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

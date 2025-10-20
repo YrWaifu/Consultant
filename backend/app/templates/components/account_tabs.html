@@ -7,7 +7,7 @@
             {% endif %}
         </div>
         <div>
-            <div class="font-medium">{{ account['last_name'] or 'Гость' }}</div>
+            <div class="font-medium">{{ account['nickname'] or 'Гость' }}</div>
             <div class="text-sm text-neutral-500">Персональный аккаунт</div>
         </div>
     </div>
@@ -32,7 +32,7 @@
         </a>
 
         {# Выход — такой же пункт, без прижатия вниз #}
-        <a href="#" class="block rounded-xl px-3 py-2 hover:bg-neutral-50 text-neutral-600">
+        <a href="{{ url_for('web_v2_logout') }}" class="block rounded-xl px-3 py-2 hover:bg-neutral-50 text-neutral-600">
             <span class="inline-flex items-center gap-2"><span>⏏️</span> Выход</span>
         </a>
     </nav>

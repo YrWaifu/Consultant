@@ -13,7 +13,17 @@
             <div class="bg-white rounded-2xl p-6 shadow-sm ring-1 ring-neutral-200/70">
                 <h1 class="text-2xl font-semibold mb-4">История проверок</h1>
 
-                {% if not items %}
+                {% if no_subscription %}
+                <div class="text-center py-8">
+                    <div class="text-5xl mb-4">🔒</div>
+                    <h3 class="text-xl font-semibold mb-2">Требуется активная подписка</h3>
+                    <p class="text-neutral-600 mb-6">Для просмотра истории проверок необходима активная подписка.</p>
+                    <a href="{{ url_for('web_v2_account_subscription') }}" 
+                       class="inline-block px-6 py-2 rounded-full bg-rose-600 text-white hover:bg-rose-700">
+                        Управление подпиской
+                    </a>
+                </div>
+                {% elif not items %}
                 <div class="text-neutral-600">Пока нет проверок. Выполните первую проверку на странице «Проверка рекламы».</div>
                 {% else %}
                 <div class="space-y-3">

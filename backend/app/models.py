@@ -14,9 +14,24 @@ class RiskLevel(str, enum.Enum):
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
+    nickname = Column(String(100), unique=True, nullable=False)
     email = Column(String(255), unique=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
-    role = Column(String(50), default="user")
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True)
+    status = Column(String(32), default="active")  # active | expired | cancelled
+    plan = Column(String(64), default="trial")  # trial | pro | enterprise
+    started_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    checks_quota = Column(Integer, default=100)  # месячный лимит проверок
+    checks_used = Column(Integer, default=0)  # использовано в текущем месяце
+    
+    user = relationship("User", backref="subscription")
 
 
 class Check(Base):

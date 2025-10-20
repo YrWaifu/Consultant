@@ -1,26 +1,57 @@
 from __future__ import annotations
-from datetime import date, timedelta
-from typing import Literal
+from datetime import date, datetime, timedelta
+from typing import Literal, Optional
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from ..models import User, Subscription
+from ..repositories import UserRepository, SubscriptionRepository
+
 
 class Account(BaseModel):
     id: int = 1
     role: str = "guest"
-    first_name: str = ""
-    last_name: str = "Гость"
+    nickname: str = "Гость"
     email: str = "guest@example.com"
     avatar_url: str | None = None
 
-_state: dict = Account().model_dump()
 
-def get_account() -> dict:
-    return _state.copy()
+def get_account(current_user: Optional[User] = None) -> dict:
+    """Получение данных аккаунта текущего пользователя"""
+    if current_user:
+        return {
+            "id": current_user.id,
+            "role": "user",
+            "nickname": current_user.nickname,
+            "email": current_user.email,
+            "avatar_url": None,  # Пока без аватара
+        }
+    # Возвращаем данные гостя если пользователь не авторизован
+    return Account().model_dump()
 
-def update_account(data: dict) -> dict:
-    global _state
-    cleaned = {k: v for k, v in data.items() if v is not None}
-    _state |= cleaned
-    return _state.copy()
+
+def update_account(data: dict, current_user: Optional[User] = None, db: Optional[Session] = None) -> dict:
+    """Обновление данных аккаунта"""
+    if current_user and db:
+        user_repo = UserRepository(db)
+        # Фильтруем только те поля, которые можно обновить
+        update_data = {}
+        
+        # Email нельзя менять после регистрации
+        # if "email" in data and data["email"]:
+        #     update_data["email"] = data["email"]
+        
+        if "nickname" in data and data["nickname"]:
+            update_data["nickname"] = data["nickname"]
+        
+        # Обновляем через репозиторий
+        if update_data:
+            updated_user = user_repo.update(current_user, **update_data)
+            return get_account(updated_user)
+        
+        return get_account(current_user)
+    
+    return Account().model_dump()
 
 class Subscription(BaseModel):
     status: Literal["none", "active"] = "none"
@@ -36,13 +67,35 @@ _sub_state: dict = Subscription().model_dump()
 def _next_renewal_iso(days: int = 30) -> str:
     return (date.today() + timedelta(days=days)).isoformat()
 
-def get_subscription() -> dict | None:
+def get_subscription(user_id: int, db: Session) -> dict | None:
     """
     Вернёт dict с данными подписки, если она активна; иначе None.
     """
-    if _sub_state.get("status") != "active":
+    subscription_repo = SubscriptionRepository(db)
+    subscription = subscription_repo.get_by_user_id(user_id)
+    
+    if not subscription:
         return None
-    return _sub_state.copy()
+    
+    # Проверяем активность подписки
+    is_active = subscription_repo.is_active(subscription)
+    
+    if not is_active:
+        return None
+    
+    # Форматируем дату истечения
+    days_left = (subscription.expires_at - datetime.utcnow()).days
+    
+    return {
+        "status": subscription.status,
+        "plan": "Пробная" if subscription.plan == "trial" else "Pro",
+        "price": "Бесплатно" if subscription.plan == "trial" else "990 ₽/мес",
+        "renews_at": subscription.expires_at.isoformat(),
+        "expires_at_formatted": subscription.expires_at.strftime("%d.%m.%Y"),
+        "days_left": days_left,
+        "quota_month": subscription.checks_quota,
+        "used": subscription.checks_used,
+    }
 
 def start_subscription(
     plan: str = "Pro",
