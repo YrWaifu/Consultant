@@ -1,19 +1,21 @@
 from rq import Queue
 from redis import Redis
 from ..settings import settings
+import os
 
 
 redis = Redis.from_url(settings.REDIS_URL)
 queue = Queue("checks", connection=redis)
 
 # Фоновая задача для обработки ML модели
-def process_ad_check_task(text: str | None, media_path: str | None):
+def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_content_type: str | None):
     """
     Фоновая задача для обработки проверки рекламы через ML модель.
     Выполняется в отдельном процессе воркера.
     """
     print(f"🚀 Начинаем обработку ML задачи. Текст: {text[:100] if text else 'None'}...")
-    
+    print(f"🎵 Аудио: {'есть' if audio_bytes else 'нет'}, тип: {audio_content_type}")
+
     try:
         from ..services.ml_core import run_ml
         from ..repositories.law_repository import LawRepository  
@@ -22,7 +24,7 @@ def process_ad_check_task(text: str | None, media_path: str | None):
         
         print("📚 Запускаем ML обработку...")
         # Запускаем ML обработку
-        ml_out = run_ml(text, media_path)
+        ml_out = run_ml(text, audio_bytes, audio_content_type)
         print(f"✅ ML обработка завершена! Результат: {ml_out}")
         
     except Exception as e:
