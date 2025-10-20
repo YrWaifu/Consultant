@@ -47,6 +47,20 @@ def get_template_context(request: Request, db: Session, **kwargs):
 
 @router.get("/", response_class=HTMLResponse, name="web_v2_check")
 async def index(request: Request, db: Session = Depends(get_db)):
+    current_user = get_current_user_from_cookie(request, db)
+    
+    # Проверяем подписку
+    if not current_user:
+        # Гость не может делать проверки
+        return templates.TemplateResponse("pages/check_no_access_v2.html", get_template_context(request, db))
+    
+    subscription_repo = SubscriptionRepository(db)
+    subscription = subscription_repo.get_by_user_id(current_user.id)
+    
+    if not subscription or not subscription_repo.is_active(subscription):
+        # Подписка истекла или отсутствует
+        return templates.TemplateResponse("pages/check_no_access_v2.html", get_template_context(request, db))
+    
     return templates.TemplateResponse("pages/check_v2.html", get_template_context(request, db))
 
 
