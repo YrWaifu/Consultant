@@ -10,7 +10,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 import os
 
-from unreliability_text import UNRELIABILITY_TEXT
+from backend.app.services.unreliability_text import UNRELIABILITY_TEXT
 
 
 def generate_pdf_report(report_data: dict) -> bytes:
