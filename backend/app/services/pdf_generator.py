@@ -10,6 +10,9 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 import os
 
+from unreliability_text import UNRELIABILITY_TEXT
+
+
 def generate_pdf_report(report_data: dict) -> bytes:
     """
     Генерирует PDF отчет на основе данных проверки рекламы.
@@ -67,7 +70,7 @@ def generate_pdf_report(report_data: dict) -> bytes:
         'CustomTitle',
         parent=styles['Heading1'],
         fontSize=18,
-        spaceAfter=30,
+        spaceAfter=15,
         alignment=TA_CENTER,
         textColor=HexColor('#1f2937'),
         fontName=font_name
@@ -82,31 +85,44 @@ def generate_pdf_report(report_data: dict) -> bytes:
         textColor=HexColor('#1f2937'),
         fontName=font_name
     )
-    
+
     normal_style = ParagraphStyle(
         'CustomNormal',
         parent=styles['Normal'],
         fontSize=10,
         spaceAfter=8,
         alignment=TA_JUSTIFY,
-        textColor=HexColor('#374151'),
         fontName=font_name
     )
     
     # Заголовок
     story.append(Paragraph("Отчет о проверке рекламы", title_style))
-    story.append(Spacer(1, 20))
-    
+
+    story.append(Paragraph("Legal ADvice не проверяет рекламу на недостоверность. Предлагаем Вам ознакомиться "
+                           "с критериями оценки самостоятельно в конце отчёта", normal_style))
+
     # Информация о проверке
     story.append(Paragraph("Информация о проверке", heading_style))
-    
+
     info_data = [
-        ['Дата проверки:', report_data.get('check_date_formatted', 'Не указана')],
-        ['Закон:', report_data.get('law_name', 'Не указан')],
-        ['Статус:', 'Соответствует законодательству' if report_data.get('is_ok') else 'Не соответствует законодательству']
+        [Paragraph('<b>Дата проверки:</b>', normal_style),
+         Paragraph(report_data.get('check_date_formatted', 'Не указана'), normal_style)],
+
+        [Paragraph('<b>Закон:</b>', normal_style),
+         Paragraph(report_data.get('law_name', 'Не указан'), normal_style)],
+
+        [Paragraph('<b>Статус:</b>', normal_style),
+         Paragraph(
+             'Соответствует законодательству' if report_data.get('is_ok')
+             else 'Не соответствует законодательству',
+             normal_style
+         )]
     ]
-    
-    info_table = Table(info_data, colWidths=[2*inch, 4*inch])
+
+    info_table = Table(
+        info_data,
+        colWidths=[2 * inch, 4 * inch]  # обязательно задаем ширину столбцов
+    )
     info_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), HexColor('#f9fafb')),
         ('TEXTCOLOR', (0, 0), (-1, -1), black),
@@ -120,7 +136,7 @@ def generate_pdf_report(report_data: dict) -> bytes:
     ]))
     
     story.append(info_table)
-    story.append(Spacer(1, 20))
+    story.append(Spacer(1, 10))
     
     # Результат проверки
     story.append(Paragraph("Результат проверки", heading_style))
@@ -133,9 +149,7 @@ def generate_pdf_report(report_data: dict) -> bytes:
             story.append(Paragraph(f"✓ {flag_text}", normal_style))
         else:
             story.append(Paragraph(f"⚠ {flag_text}", normal_style))
-    
-    story.append(Spacer(1, 20))
-    
+
     # Нарушения (если есть)
     violations = report_data.get('violations', [])
     if violations:
@@ -185,6 +199,43 @@ def generate_pdf_report(report_data: dict) -> bytes:
             story.append(Paragraph(case.get('text', 'Описание недоступно'), normal_style))
             story.append(Spacer(1, 10))
     
+    # Недостоверность рекламы
+    story.append(Paragraph("Признаки недостоверной рекламы", title_style))
+    story.append(Spacer(1, 5))
+
+    story.append(
+        Paragraph("Если в рекламе хоть что-то из перечисленного ниже не соответствует правде — это недостоверная "
+                  "реклама, то есть обман.", normal_style))
+
+    section_style = ParagraphStyle(
+        'Section',
+        parent=styles['Heading2'],
+        fontSize=13,
+        textColor=HexColor('#1f2937'),
+        spaceBefore=12,
+        spaceAfter=6,
+        fontName=font_name_bold
+    )
+
+    bullet_style = ParagraphStyle(
+        'Bullet',
+        parent=styles['Normal'],
+        fontSize=10,
+        leftIndent=20,
+        spaceAfter=4,
+        fontName=font_name
+    )
+
+    paragraphs = [p.strip() for p in UNRELIABILITY_TEXT.split("\n") if p.strip()]
+
+    for p in paragraphs:
+        if p[0].isdigit() and '.' in p[:3]:
+            story.append(Paragraph(p, section_style))
+        elif p.startswith('Реклама'):
+            story.append(Paragraph(p, normal_style))
+        else:
+            story.append(Paragraph(p, bullet_style))
+
     # Заключительная информация
     story.append(Spacer(1, 30))
     footer_style = ParagraphStyle(
@@ -195,7 +246,7 @@ def generate_pdf_report(report_data: dict) -> bytes:
         textColor=HexColor('#6b7280'),
         fontName=font_name
     )
-    
+
     story.append(Paragraph("Результаты проверки носят рекомендательный характер", footer_style))
     story.append(Paragraph(f"Отчет сгенерирован: {datetime.now().strftime('%d.%m.%Y в %H:%M')}", footer_style))
     
