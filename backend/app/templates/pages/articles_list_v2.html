@@ -10,7 +10,7 @@
         <div class="flex items-center gap-3 mb-6">
             <span class="text-2xl">{{ block.category.icon }}</span>
             <h2 class="text-xl font-semibold text-neutral-900">{{ block.category.name }}</h2>
-            {% if block.articles|length > 3 %}
+            {% if block.articles|length > 2 %}
             <a href="{{ url_for('web_v2_articles_category', category_slug=block.category.slug) }}" 
                class="ml-auto text-rose-600 hover:text-rose-700 font-medium">
                 Все статьи →
