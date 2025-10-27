@@ -20,15 +20,14 @@ def list_history(user_id: Optional[int] = None, db: Optional[Session] = None) ->
         is_ok = check.result.get('is_ok', False) if check.result else False
         violations_count = len(check.result.get('violations', [])) if check.result else 0
         
-        if is_ok:
-            badge_text = "Нарушний не обнаружено"
+        # Реклама либо без нарушений, либо с нарушениями
+        if is_ok and violations_count == 0:
+            badge_text = "Нарушений не обнаружено"
             badge_class = "bg-emerald-100 text-emerald-700"
-        elif violations_count > 3:
+        else:
+            # Любое количество нарушений (даже 1) = с нарушениями
             badge_text = "Нарушения"
             badge_class = "bg-rose-100 text-rose-700"
-        else:
-            badge_text = "Предупреждения"
-            badge_class = "bg-amber-100 text-amber-700"
         
         result.append({
             "id": check.id,

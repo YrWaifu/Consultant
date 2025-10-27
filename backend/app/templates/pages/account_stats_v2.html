@@ -24,31 +24,41 @@
                     </a>
                 </div>
                 {% else %}
-                <div class="grid sm:grid-cols-2 gap-4">
+                <div class="grid sm:grid-cols-3 gap-4">
                     <div class="rounded-xl border border-neutral-200 p-4">
                         <div class="text-neutral-500 text-sm">Всего проверок</div>
                         <div class="mt-1 text-xl font-semibold">{{ stats.total_checks }}</div>
                     </div>
-                    <div class="rounded-xl border border-neutral-200 p-4">
+                    <div class="rounded-xl border border-neutral-200 p-4 bg-emerald-50">
                         <div class="text-neutral-500 text-sm">Без нарушений</div>
-                        <div class="mt-1 text-xl font-semibold">{{ stats.ok }}</div>
+                        <div class="mt-1 text-xl font-semibold">{{ stats.ok }} <span class="text-base text-emerald-600">({{ stats.ok_percent }}%)</span></div>
                     </div>
-                    <div class="rounded-xl border border-neutral-200 p-4">
-                        <div class="text-neutral-500 text-sm">С предупреждениями</div>
-                        <div class="mt-1 text-xl font-semibold">{{ stats.warn }}</div>
-                    </div>
-                    <div class="rounded-xl border border-neutral-200 p-4">
+                    <div class="rounded-xl border border-neutral-200 p-4 bg-rose-50">
                         <div class="text-neutral-500 text-sm">С нарушениями</div>
-                        <div class="mt-1 text-xl font-semibold">{{ stats.bad }}</div>
+                        <div class="mt-1 text-xl font-semibold">{{ stats.bad }} <span class="text-base text-rose-600">({{ stats.bad_percent }}%)</span></div>
                     </div>
                 </div>
 
                 <div class="mt-6">
-                    <div class="text-neutral-500 text-sm">Последние 30 дней</div>
-                    <div class="mt-2 h-24 rounded-xl bg-neutral-100 flex items-end gap-1 p-2">
-                        {% for v in stats.last30 %}
-                        <div class="flex-1 bg-rose-300 rounded-sm" style="height: {{ v }}%"></div>
-                        {% endfor %}
+                    <h3 class="text-lg font-semibold mb-3">Активность за последние 30 дней</h3>
+                    <div class="h-32 rounded-xl bg-neutral-50 border border-neutral-200 flex items-end gap-1 p-3">
+                        {% set max_value = stats.last30|max %}
+                        {% if max_value > 0 %}
+                            {% for count in stats.last30 %}
+                            <div class="flex-1 bg-rose-400 rounded-sm transition-all hover:bg-rose-500" 
+                                 style="height: {{ (count / max_value * 100)|round }}%"
+                                 title="{{ count }} проверок">
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="flex-1 text-center text-neutral-400 text-sm self-center">
+                                Нет данных за последние 30 дней
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="mt-2 flex justify-between text-xs text-neutral-500">
+                        <span>30 дней назад</span>
+                        <span>Сегодня</span>
                     </div>
                 </div>
                 {% endif %}

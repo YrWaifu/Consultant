@@ -92,7 +92,6 @@ class CheckRepository:
         
         total = len(checks)
         ok_count = 0
-        warn_count = 0
         bad_count = 0
         
         for check in checks:
@@ -100,17 +99,44 @@ class CheckRepository:
                 is_ok = check.result.get('is_ok', False)
                 violations = check.result.get('violations', [])
                 
-                if is_ok:
+                # Реклама либо без нарушений, либо с нарушениями
+                if is_ok and len(violations) == 0:
                     ok_count += 1
-                elif len(violations) > 3:
-                    bad_count += 1
                 else:
-                    warn_count += 1
+                    # Любое количество нарушений (даже 1) = с нарушениями
+                    bad_count += 1
         
         return {
             "total_checks": total,
             "ok": ok_count,
-            "warn": warn_count,
             "bad": bad_count
         }
+    
+    def get_checks_by_day(self, user_id: int, days: int = 30) -> dict:
+        """Получить количество проверок по дням за последние N дней"""
+        from datetime import datetime, timedelta
+        
+        end_date = datetime.utcnow()
+        start_date = end_date - timedelta(days=days - 1)
+        
+        checks = self.db.query(Check).filter(
+            Check.user_id == user_id,
+            Check.status == "done",
+            Check.created_at >= start_date
+        ).all()
+        
+        # Создаем словарь с количеством проверок по дням
+        daily_counts = {}
+        for i in range(days):
+            day = (start_date + timedelta(days=i)).date()
+            daily_counts[day] = 0
+        
+        # Подсчитываем проверки
+        for check in checks:
+            check_date = check.created_at.date()
+            if check_date in daily_counts:
+                daily_counts[check_date] += 1
+        
+        # Возвращаем список значений в хронологическом порядке
+        return [daily_counts[start_date.date() + timedelta(days=i)] for i in range(days)]
 

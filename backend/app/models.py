@@ -27,8 +27,9 @@ class Subscription(Base):
     plan = Column(String(64), default="trial")  # trial | pro | enterprise
     started_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     expires_at = Column(DateTime, nullable=False)
-    checks_quota = Column(Integer, default=100)  # месячный лимит проверок
-    checks_used = Column(Integer, default=0)  # использовано в текущем месяце
+    checks_quota = Column(Integer, default=5)  # лимит проверок (5 для trial, 20 для pro)
+    checks_used = Column(Integer, default=0)  # использовано
+    last_reset_at = Column(DateTime, default=datetime.utcnow)  # последний сброс счетчика (для недельного обновления)
     
     user = relationship("User", backref="subscription")
 

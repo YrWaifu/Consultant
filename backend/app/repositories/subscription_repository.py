@@ -16,7 +16,7 @@ class SubscriptionRepository:
         return self.db.query(Subscription).filter(Subscription.user_id == user_id).first()
     
     def create_trial(self, user_id: int, days: int = 7) -> Subscription:
-        """Создать пробную подписку на N дней"""
+        """Создать пробную подписку на N дней с лимитом 5 проверок"""
         started_at = datetime.utcnow()
         expires_at = started_at + timedelta(days=days)
         
@@ -26,14 +26,53 @@ class SubscriptionRepository:
             plan="trial",
             started_at=started_at,
             expires_at=expires_at,
-            checks_quota=100,
-            checks_used=0
+            checks_quota=5,  # 5 проверок для trial
+            checks_used=0,
+            last_reset_at=started_at
         )
         
         self.db.add(subscription)
         self.db.commit()
         self.db.refresh(subscription)
         return subscription
+    
+    def create_pro(self, user_id: int, days: int = 30) -> Subscription:
+        """Создать pro подписку на N дней с лимитом 20 проверок в неделю"""
+        started_at = datetime.utcnow()
+        expires_at = started_at + timedelta(days=days)
+        
+        subscription = Subscription(
+            user_id=user_id,
+            status="active",
+            plan="pro",
+            started_at=started_at,
+            expires_at=expires_at,
+            checks_quota=20,  # 20 проверок в неделю для pro
+            checks_used=0,
+            last_reset_at=started_at
+        )
+        
+        self.db.add(subscription)
+        self.db.commit()
+        self.db.refresh(subscription)
+        return subscription
+    
+    def _reset_weekly_quota_if_needed(self, subscription: Subscription) -> None:
+        """Сброс недельной квоты для pro подписки, если прошла неделя"""
+        if subscription.plan == "trial":
+            # Для trial не сбрасываем квоту
+            return
+        
+        if not subscription.last_reset_at:
+            subscription.last_reset_at = subscription.started_at
+        
+        # Проверяем, прошла ли неделя с последнего сброса
+        week_passed = datetime.utcnow() - subscription.last_reset_at >= timedelta(weeks=1)
+        
+        if week_passed:
+            subscription.checks_used = 0
+            subscription.last_reset_at = datetime.utcnow()
+            self.db.commit()
     
     def is_active(self, subscription: Subscription) -> bool:
         """Проверить, активна ли подписка"""
@@ -47,12 +86,18 @@ class SubscriptionRepository:
             self.db.commit()
             return False
         
+        # Для pro подписки проверяем и сбрасываем недельную квоту
+        self._reset_weekly_quota_if_needed(subscription)
+        
         return True
     
     def has_checks_available(self, subscription: Subscription) -> bool:
         """Проверить, есть ли доступные проверки"""
         if not self.is_active(subscription):
             return False
+        
+        # Проверяем недельную квоту для pro подписки
+        self._reset_weekly_quota_if_needed(subscription)
         
         return subscription.checks_used < subscription.checks_quota
     

@@ -86,6 +86,7 @@ def get_subscription(user_id: int, db: Session) -> dict | None:
     return {
         "status": subscription.status,
         "plan": "Пробная" if subscription.plan == "trial" else "Pro",
+        "plan_code": subscription.plan,  # оригинальный код плана для условий в шаблонах
         "price": "Бесплатно" if subscription.plan == "trial" else "990 ₽/мес",
         "renews_at": subscription.expires_at.isoformat(),
         "expires_at_formatted": subscription.expires_at.strftime("%d.%m.%Y"),
