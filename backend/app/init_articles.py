@@ -75,7 +75,7 @@ def check_and_init_articles():
 
 def init_app():
     """Инициализация приложения с проверкой статей"""
-    print("🚀 Запуск Legal ADvice...")
+    print("🚀 Запуск Реквизор...")
     
     # Проверяем и инициализируем статьи
     articles_ok = check_and_init_articles()
