@@ -23,7 +23,7 @@
             {% for article in block.articles %}
             <article class="rounded-xl border border-rose-300/70 bg-white p-4 shadow-[0_0_0_1px_rgba(244,63,94,0.05)] hover:shadow-md transition-shadow">
                 <div class="text-xs text-neutral-500 mb-2">
-                    {{ article.published_at.strftime('%d %B %Y') }}
+                    {{format_date(article.published_at, format='d MMMM yyyy', locale='ru')}}
                 </div>
                 <h3 class="font-semibold leading-snug mb-2">
                     <a href="{{ url_for('web_v2_article_detail', article_slug=article.slug) }}" 

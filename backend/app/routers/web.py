@@ -17,8 +17,11 @@ from ..services.stats_stub import get_stats
 from ..services.pdf_generator import generate_pdf_report
 from ..workers.queue import queue, process_ad_check_task
 
+from babel.dates import format_date
+
 router = APIRouter()
 templates = Jinja2Templates(directory="backend/app/templates")
+templates.env.globals['format_date'] = format_date
 
 @router.get("/", response_class=HTMLResponse, name="web_v2_check")
 async def index(request: Request):
