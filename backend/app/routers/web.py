@@ -4,7 +4,6 @@ from fastapi.templating import Jinja2Templates
 import json
 import os
 
-from ..services.news_stub import list_news, get_news_detail
 from ..services.article_service import ArticleService
 from ..services.article_file_loader import ArticleFileLoader
 from ..services.laws_stub import get_law_index, get_article, search_laws
@@ -321,17 +320,6 @@ async def upload_articles_json(file: UploadFile = File(...)):
         
         return JSONResponse(result)
         
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
-
-
-@router.post("/admin/articles/create-sample", name="admin_create_sample_articles")
-async def create_sample_articles():
-    """Создание примеров статей для демонстрации"""
-    try:
-        loader = ArticleFileLoader()
-        result = loader.create_sample_data()
-        return JSONResponse(result)
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 

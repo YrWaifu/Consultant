@@ -107,7 +107,7 @@ class ArticleFileLoader:
                 result["categories_created"] += 1
             except Exception as e:
                 result["errors"].append(f"Ошибка создания категории {cat_data['name']}: {str(e)}")
-        
+
         # Обрабатываем Markdown файлы
         for md_file in directory.glob("*.md"):
             try:
@@ -125,11 +125,11 @@ class ArticleFileLoader:
                 # Создаем статью
                 article_data['category_id'] = category.id
                 del article_data['category']  # Удаляем поле category
-                
                 article = self.repository.create_article(**article_data)
                 result["articles_created"] += 1
                 
             except Exception as e:
+                print(str(e))
                 result["errors"].append(f"Ошибка обработки файла {md_file.name}: {str(e)}")
         
         return result
@@ -180,8 +180,7 @@ class ArticleFileLoader:
             'content_html': None,  # Можно добавить конвертацию в HTML
             'author': frontmatter.get('author'),
             'category': frontmatter.get('category', 'ad-check-knowledge'),
-            'sort_order': frontmatter.get('sort_order', 0),
-            'published_at': self._parse_date(frontmatter.get('date'))
+            'sort_order': frontmatter.get('sort_order', 0)
         }
     
     def _parse_simple_frontmatter(self, frontmatter_text: str) -> Dict[str, Any]:

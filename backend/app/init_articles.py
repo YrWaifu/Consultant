@@ -2,7 +2,7 @@ from sqlalchemy import text, inspect
 from sqlalchemy.orm import Session
 from .db import engine, SessionLocal, Base
 from .models import Article, ArticleCategory
-from .services.article_service import ArticleService
+from .services.article_file_loader import ArticleFileLoader
 
 
 def create_tables_if_not_exist():
@@ -11,11 +11,11 @@ def create_tables_if_not_exist():
         # Проверяем существование таблиц
         inspector = inspect(engine)
         tables = inspector.get_table_names()
-        
+
         # Проверяем наличие таблиц статей
         articles_table_exists = 'articles' in tables
         categories_table_exists = 'article_categories' in tables
-        
+
         if not articles_table_exists or not categories_table_exists:
             print("🔧 Создаем таблицы статей...")
             
@@ -54,10 +54,13 @@ def check_and_init_articles():
             
             # Если нет данных, создаем примеры
             if categories_count == 0 or articles_count == 0:
-                print("📝 Данные статей отсутствуют. Создаем примеры...")
-                
-                article_service = ArticleService()
-                result = article_service.create_sample_data()
+                print("📝 Данные статей отсутствуют. Загружаем...")
+
+                from pathlib import Path
+                ARTICLES_DIR = str(Path(__file__).resolve().parents[2] / "articles")
+
+                article_loader=ArticleFileLoader()
+                result = article_loader.load_from_markdown_directory(ARTICLES_DIR)
                 
                 print(f"✅ Создано {result['categories_created']} категорий и {result['articles_created']} статей")
                 return True
@@ -71,18 +74,3 @@ def check_and_init_articles():
     except Exception as e:
         print(f"❌ Ошибка при проверке статей: {e}")
         return False
-
-
-def init_app():
-    """Инициализация приложения с проверкой статей"""
-    print("🚀 Запуск Реквизор...")
-    
-    # Проверяем и инициализируем статьи
-    articles_ok = check_and_init_articles()
-    
-    if articles_ok:
-        print("✅ Приложение готово к работе")
-    else:
-        print("⚠️  Приложение запущено, но требуется настройка статей")
-    
-    return articles_ok

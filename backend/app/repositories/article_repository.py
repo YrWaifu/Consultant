@@ -119,6 +119,7 @@ class ArticleRepository:
             content_html=content_html,
             sort_order=sort_order
         )
+        print(article)
         self.db.add(article)
         self.db.commit()
         self.db.refresh(article)
