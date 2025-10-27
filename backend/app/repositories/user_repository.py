@@ -20,11 +20,7 @@ class UserRepository:
         """Получить пользователя по email"""
         return self.db.query(User).filter(User.email == email).first()
     
-    def get_by_nickname(self, nickname: str) -> Optional[User]:
-        """Получить пользователя по никнейму"""
-        return self.db.query(User).filter(User.nickname == nickname).first()
-    
-    def create(self, nickname: str, email: str, hashed_password: str) -> User:
+    def create(self, email: str, hashed_password: str) -> User:
         """Создать нового пользователя"""
         # Проверяем уникальность email
         if self.get_by_email(email):
@@ -33,15 +29,7 @@ class UserRepository:
                 detail="Пользователь с таким email уже существует"
             )
         
-        # Проверяем уникальность nickname
-        if self.get_by_nickname(nickname):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Пользователь с таким никнеймом уже существует"
-            )
-        
         user = User(
-            nickname=nickname,
             email=email,
             hashed_password=hashed_password
         )
@@ -69,15 +57,6 @@ class UserRepository:
                         raise HTTPException(
                             status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Email уже используется другим пользователем"
-                        )
-                
-                # Проверяем уникальность при изменении nickname
-                if key == "nickname" and value != user.nickname:
-                    existing = self.get_by_nickname(value)
-                    if existing and existing.id != user.id:
-                        raise HTTPException(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="Никнейм уже используется другим пользователем"
                         )
                 
                 setattr(user, key, value)

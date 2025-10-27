@@ -65,7 +65,6 @@ def register_user(db: Session, user_data: UserRegister) -> User:
     
     # Создаем пользователя
     new_user = user_repo.create(
-        nickname=user_data.nickname,
         email=user_data.email,
         hashed_password=hashed_password
     )

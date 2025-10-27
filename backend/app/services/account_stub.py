@@ -11,7 +11,6 @@ from ..repositories import UserRepository, SubscriptionRepository
 class Account(BaseModel):
     id: int = 1
     role: str = "guest"
-    nickname: str = "Гость"
     email: str = "guest@example.com"
     avatar_url: str | None = None
 
@@ -22,7 +21,6 @@ def get_account(current_user: Optional[User] = None) -> dict:
         return {
             "id": current_user.id,
             "role": "user",
-            "nickname": current_user.nickname,
             "email": current_user.email,
             "avatar_url": None,  # Пока без аватара
         }
@@ -41,8 +39,7 @@ def update_account(data: dict, current_user: Optional[User] = None, db: Optional
         # if "email" in data and data["email"]:
         #     update_data["email"] = data["email"]
         
-        if "nickname" in data and data["nickname"]:
-            update_data["nickname"] = data["nickname"]
+        # Нет обновляемых полей сейчас (email неизменяемый)
         
         # Обновляем через репозиторий
         if update_data:

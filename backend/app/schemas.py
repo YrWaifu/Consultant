@@ -18,7 +18,6 @@ class CheckOut(BaseModel):
 
 # Auth schemas
 class UserRegister(BaseModel):
-    nickname: str
     email: EmailStr
     password: str
 
@@ -30,7 +29,6 @@ class UserLogin(BaseModel):
 
 class UserOut(BaseModel):
     id: int
-    nickname: str
     email: str
     created_at: datetime
     

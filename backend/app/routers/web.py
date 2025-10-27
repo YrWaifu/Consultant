@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from ..services.news_stub import list_news, get_news_detail
 from ..services.laws_stub import get_law_index, get_article, search_laws
 from ..services.account_stub import (
-    get_account, update_account,
+    get_account,
     get_subscription, start_subscription, cancel_subscription,
 )
 from ..repositories import SubscriptionRepository, CheckRepository
@@ -295,33 +295,8 @@ async def check_result_pdf(job_id: str):
         return RedirectResponse(url="/v2/check", status_code=303)
 
 
-@router.get("/v2/account", response_class=HTMLResponse, name="web_v2_account")
-async def account_page(request: Request, db: Session = Depends(get_db)):
-    current_user = get_current_user_from_cookie(request, db)
-    data = get_account(current_user)
-    return templates.TemplateResponse(
-        "pages/account_profile_v2.html",
-        get_template_context(request, db, active="account", tab="profile", account=data),
-    )
-
-@router.post("/v2/account", response_class=HTMLResponse, name="web_v2_account_submit")
-async def account_submit(
-    request: Request,
-    nickname: str = Form(""),
-    avatar: UploadFile | None = File(None),
-    db: Session = Depends(get_db),
-):
-    current_user = get_current_user_from_cookie(request, db)
-    # файл никуда не сохраняем — просто делаем вид, что у нас есть url
-    avatar_url = None
-    if avatar and avatar.filename:
-        avatar_url = f"/static/img/avatars/{avatar.filename}"
-    update_account(
-        {"nickname": nickname, "avatar_url": avatar_url},
-        current_user,
-        db
-    )
-    return RedirectResponse(request.url_for("web_v2_account"), status_code=303)
+# Страница профиля удалена: используем email как отображаемое имя, 
+# и перенаправляем пользователей на подписку/историю/статистику.
 
 @router.get("/v2/laws", response_class=HTMLResponse, name="web_v2_laws")
 async def laws_index(request: Request, db: Session = Depends(get_db)):
@@ -484,14 +459,13 @@ async def register_page(request: Request, db: Session = Depends(get_db)):
 @router.post("/v2/auth/register", name="web_v2_register_submit")
 async def register_submit(
     request: Request,
-    nickname: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
     """Обработка регистрации"""
     try:
-        user_data = UserRegister(nickname=nickname, email=email, password=password)
+        user_data = UserRegister(email=email, password=password)
         user = register_user(db, user_data)
 
         # Создаем response с редиректом

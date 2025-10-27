@@ -7,17 +7,12 @@
             {% endif %}
         </div>
         <div>
-            <div class="font-medium">{{ account['nickname'] or 'Гость' }}</div>
+            <div class="font-medium">{{ account['email'] if account['role']=='user' else 'Гость' }}</div>
             <div class="text-sm text-neutral-500">Персональный аккаунт</div>
         </div>
     </div>
 
     <nav class="space-y-1 mt-2">
-        <a href="{{ url_for('web_v2_account') }}"
-            class="block rounded-xl px-3 py-2 {{ 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' if tab=='profile' else 'hover:bg-neutral-50' }}">
-            <span class="inline-flex items-center gap-2"><span>👤</span> Данные аккаунта</span>
-        </a>
-
         <a href="{{ url_for('web_v2_account_subscription') }}"
             class="block rounded-xl px-3 py-2 {{ 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' if tab=='subscription' else 'hover:bg-neutral-50' }}">
             <span class="inline-flex items-center gap-2">🖊️ Подписка</span>
