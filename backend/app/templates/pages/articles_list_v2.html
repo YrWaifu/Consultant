@@ -7,7 +7,7 @@
 
 <div class="space-y-12">
     {% for block in blocks %}
-    <section class="bg-white rounded-2xl border border-rose-200 p-6 md:p-8">
+    <section>
         <!-- Заголовок блока с иконкой -->
         <div class="flex items-center gap-3 mb-6">
             <span class="text-2xl">{{ block.category.icon }}</span>
@@ -19,11 +19,6 @@
             </a>
             {% endif %}
         </div>
-        
-        <!-- Описание категории -->
-        {% if block.category.description %}
-        <p class="text-neutral-600 mb-6">{{ block.category.description }}</p>
-        {% endif %}
         
         <!-- Сетка статей -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
