@@ -16,7 +16,22 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     email = Column(String(255), unique=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
-    role = Column(String(50), default="user")
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True)
+    status = Column(String(32), default="active")  # active | expired | cancelled
+    plan = Column(String(64), default="trial")  # trial | pro | enterprise
+    started_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    checks_quota = Column(Integer, default=5)  # лимит проверок (5 для trial, 20 для pro)
+    checks_used = Column(Integer, default=0)  # использовано
+    last_reset_at = Column(DateTime, default=datetime.utcnow)  # последний сброс счетчика (для недельного обновления)
+    
+    user = relationship("User", backref="subscription")
 
 
 class Check(Base):

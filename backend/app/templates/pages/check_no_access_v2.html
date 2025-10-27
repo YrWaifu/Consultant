@@ -1,0 +1,73 @@
+{% extends "layouts/base_v2.html" %}
+{% set active = "check" %}
+{% block title %}Проверка рекламы — Требуется подписка{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto text-center py-12">
+    <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 p-12">
+        <div class="text-6xl mb-6">🔒</div>
+        
+        {% if current_user %}
+            {% if subscription and subscription.plan == "trial" and subscription.status == "expired" %}
+                {# Free trial истек #}
+                <h1 class="text-3xl font-bold mb-4">Пробный период завершен</h1>
+                <p class="text-neutral-600 mb-8">
+                    Ваш бесплатный пробный период истек.<br>
+                    Оформите подписку, чтобы продолжить использовать все функции сервиса!
+                </p>
+                
+                <div class="space-y-3">
+                    <a href="{{ url_for('web_v2_account_subscription') }}" 
+                       class="inline-block px-8 py-3 rounded-full bg-rose-600 text-white font-medium hover:bg-rose-700 transition">
+                        Купить подписку
+                    </a>
+                    <br>
+                    <a href="{{ url_for('web_v2_account_subscription') }}" 
+                       class="inline-block px-6 py-2 text-neutral-600 hover:text-neutral-900">
+                        Посмотреть тарифы
+                    </a>
+                </div>
+            {% else %}
+                {# Подписка отсутствует или истекла (не trial) #}
+                <h1 class="text-3xl font-bold mb-4">Требуется подписка</h1>
+                <p class="text-neutral-600 mb-8">
+                    Для использования проверки рекламы необходима активная подписка.<br>
+                    Ваша подписка истекла или отсутствует.
+                </p>
+                
+                <div class="space-y-3">
+                    <a href="{{ url_for('web_v2_account_subscription') }}" 
+                       class="inline-block px-8 py-3 rounded-full bg-rose-600 text-white font-medium hover:bg-rose-700 transition">
+                        Управление подпиской
+                    </a>
+                    <br>
+                    <a href="{{ url_for('web_v2_account_subscription') }}" 
+                       class="inline-block px-6 py-2 text-neutral-600 hover:text-neutral-900">
+                        Перейти к подписке
+                    </a>
+                </div>
+            {% endif %}
+        {% else %}
+            {# Гость - предлагаем регистрацию #}
+            <h1 class="text-3xl font-bold mb-4">Требуется подписка</h1>
+            <p class="text-neutral-600 mb-8">
+                Для использования проверки рекламы необходимо зарегистрироваться.<br>
+                При регистрации вы получите <strong>7 дней бесплатного доступа</strong> и <strong>5 проверок</strong>!
+            </p>
+            
+            <div class="space-y-3">
+                <a href="{{ url_for('web_v2_register') }}" 
+                   class="inline-block px-8 py-3 rounded-full bg-emerald-500 text-white font-medium hover:bg-emerald-600 transition shadow-md">
+                    Попробовать бесплатно
+                </a>
+                <br>
+                <a href="{{ url_for('web_v2_login') }}" 
+                   class="inline-block px-6 py-2 text-neutral-600 hover:text-neutral-900">
+                    Уже есть аккаунт? Войти
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

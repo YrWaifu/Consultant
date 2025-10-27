@@ -97,6 +97,34 @@ def generate_pdf_report(report_data: dict) -> bytes:
     
     # Заголовок
     story.append(Paragraph("Отчет о проверке рекламы", title_style))
+    story.append(Spacer(1, 20))
+
+    # Исходный текст рекламы (если есть)
+    if report_data.get('input_text'):
+        story.append(Paragraph("Исходный текст рекламы", heading_style))
+
+        # Стиль для текста рекламы
+        ad_text_style = ParagraphStyle(
+            'AdText',
+            parent=styles['Normal'],
+            fontSize=10,
+            spaceAfter=8,
+            alignment=TA_LEFT,
+            textColor=HexColor('#374151'),
+            fontName=font_name,
+            leftIndent=10,
+            rightIndent=10,
+            borderColor=HexColor('#e5e7eb'),
+            borderWidth=1,
+            borderPadding=10,
+            backColor=HexColor('#f9fafb')
+        )
+
+        # Заменяем переносы строк на <br/> для сохранения форматирования
+        ad_text = report_data.get('input_text', '').replace('\n', '<br/>')
+        story.append(Paragraph(ad_text, ad_text_style))
+        story.append(Spacer(1, 20))
+
 
     story.append(Paragraph("Legal ADvice не проверяет рекламу на недостоверность. Предлагаем Вам ознакомиться "
                            "с критериями оценки самостоятельно в конце отчёта", normal_style))

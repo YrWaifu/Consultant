@@ -1,59 +1,132 @@
-from fastapi import APIRouter, Request, Form, UploadFile, File
+from fastapi import APIRouter, Request, Form, UploadFile, File, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse, Response, JSONResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
 
 from ..services.news_stub import list_news, get_news_detail
 from ..services.laws_stub import get_law_index, get_article, search_laws
 from ..services.account_stub import (
-    get_account, update_account,
+    get_account,
     get_subscription, start_subscription, cancel_subscription,
 )
+from ..repositories import SubscriptionRepository, CheckRepository
 from ..services.history_stub import list_history
 from ..services.stats_stub import get_stats
 from ..services.pdf_generator import generate_pdf_report
 from ..workers.queue import queue, process_ad_check_task
+from ..services.auth_service import (
+    authenticate_user, register_user, get_current_user_from_cookie,
+    set_auth_cookie, clear_auth_cookie
+)
+from ..schemas import UserRegister, UserLogin
+from ..db import SessionLocal
 
 router = APIRouter()
 templates = Jinja2Templates(directory="backend/app/templates")
 
+
+# Dependency для получения сессии БД
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+# Helper функция для добавления current_user в контекст
+def get_template_context(request: Request, db: Session, **kwargs):
+    """Получает базовый контекст для всех шаблонов с информацией о текущем пользователе"""
+    current_user = get_current_user_from_cookie(request, db)
+    return {
+        "request": request,
+        "current_user": current_user,
+        **kwargs
+    }
+
+
 @router.get("/", response_class=HTMLResponse, name="web_v2_check")
-async def index(request: Request):
-    return templates.TemplateResponse("pages/check_v2.html", {"request": request})
+async def index(request: Request, db: Session = Depends(get_db)):
+    current_user = get_current_user_from_cookie(request, db)
+
+    # Проверяем подписку
+    if not current_user:
+        # Гость не может делать проверки
+        return templates.TemplateResponse("pages/check_no_access_v2.html", get_template_context(request, db))
+
+    subscription_repo = SubscriptionRepository(db)
+    subscription = subscription_repo.get_by_user_id(current_user.id)
+
+    if not subscription or not subscription_repo.is_active(subscription):
+        # Подписка истекла или отсутствует - передаем информацию о подписке
+        return templates.TemplateResponse("pages/check_no_access_v2.html", 
+            get_template_context(request, db, subscription=subscription))
+
+    # Передаем информацию о квоте
+    return templates.TemplateResponse("pages/check_v2.html",
+        get_template_context(request, db,
+            checks_used=subscription.checks_used,
+            checks_quota=subscription.checks_quota,
+            checks_remaining=subscription.checks_quota - subscription.checks_used
+        )
+    )
 
 
 @router.get("/v2/news", response_class=HTMLResponse, name="web_v2_news")
-async def news_page(request: Request, q: str | None = None):
+async def news_page(request: Request, q: str | None = None, db: Session = Depends(get_db)):
     items = list_news(q)
     return templates.TemplateResponse(
         "pages/news_list_v2.html",
-        {"request": request, "items": items}
+        get_template_context(request, db, items=items)
     )
 
 
 @router.get("/v2/news/{news_id}", response_class=HTMLResponse, name="web_v2_news_detail")
-async def news_detail_page(request: Request, news_id: int):
+async def news_detail_page(request: Request, news_id: int, db: Session = Depends(get_db)):
     news = get_news_detail(news_id)
     if not news:
         return RedirectResponse(url="/v2/news", status_code=303)
     return templates.TemplateResponse(
         "pages/news_detail_v2.html",
-        {"request": request, "news": news}
+        get_template_context(request, db, news=news)
     )
 
 
 @router.get("/v2/search", response_class=HTMLResponse, name="web_v2_search")
-async def search_page(request: Request, q: str | None = None):
+async def search_page(request: Request, q: str | None = None, db: Session = Depends(get_db)):
     news_results = list_news(q) if q else []
     law_results = search_laws(q) if q else []
     return templates.TemplateResponse(
         "pages/search_v2.html",
-        {"request": request, "query": q, "news_results": news_results, "law_results": law_results}
+        get_template_context(request, db, query=q, news_results=news_results, law_results=law_results)
     )
 
 
 @router.get("/v2/check", response_class=HTMLResponse, name="web_v2_check")
-async def check_page(request: Request):
-    return templates.TemplateResponse("pages/check_v2.html", {"request": request})
+async def check_page(request: Request, db: Session = Depends(get_db)):
+    current_user = get_current_user_from_cookie(request, db)
+
+    # Проверяем подписку
+    if not current_user:
+        # Гость не может делать проверки
+        return templates.TemplateResponse("pages/check_no_access_v2.html", get_template_context(request, db))
+
+    subscription_repo = SubscriptionRepository(db)
+    subscription = subscription_repo.get_by_user_id(current_user.id)
+
+    if not subscription or not subscription_repo.is_active(subscription):
+        # Подписка истекла или отсутствует - передаем информацию о подписке
+        return templates.TemplateResponse("pages/check_no_access_v2.html", 
+            get_template_context(request, db, subscription=subscription))
+
+    # Передаем информацию о квоте
+    return templates.TemplateResponse("pages/check_v2.html",
+        get_template_context(request, db,
+            checks_used=subscription.checks_used,
+            checks_quota=subscription.checks_quota,
+            checks_remaining=subscription.checks_quota - subscription.checks_used
+        )
+    )
 
 
 @router.post("/v2/check", response_class=HTMLResponse, name="web_v2_check_submit")
@@ -62,6 +135,7 @@ async def check_submit(
     text: str | None = Form(None),
     claims: list[str] | None = Form(None),
     file: UploadFile | None = File(None),
+    db: Session = Depends(get_db),
 ):
     # Если прикреплен файл, читаем его в байты
     audio_bytes = None
@@ -71,20 +145,52 @@ async def check_submit(
         audio_bytes = await file.read()
         audio_content_type = file.content_type
 
+    current_user = get_current_user_from_cookie(request, db)
+
+    # Проверяем авторизацию и подписку
+    if not current_user:
+        return RedirectResponse(url="/v2/auth/login", status_code=303)
+
+    subscription_repo = SubscriptionRepository(db)
+    subscription = subscription_repo.get_by_user_id(current_user.id)
+
+    if not subscription or not subscription_repo.is_active(subscription):
+        return RedirectResponse(url="/v2/account/subscription", status_code=303)
+
+    # Проверяем доступные проверки
+    if not subscription_repo.has_checks_available(subscription):
+        # Лимит исчерпан - перенаправляем на страницу подписки
+        return templates.TemplateResponse(
+            "pages/check_limit_reached_v2.html",
+            get_template_context(request, db, subscription=subscription)
+        )
+
+    # Увеличиваем счетчик использованных проверок
+    subscription_repo.increment_checks(subscription)
+
+    # Создаем запись о проверке в БД
+    check_repo = CheckRepository(db)
+    check = check_repo.create(
+        user_id=current_user.id,
+        input_text=text,
+        input_media_path=None,  # TODO: обработка файлов
+        status="queued"
+    )
+
     # Создаем фоновую задачу для обработки ML модели
-    job = queue.enqueue(process_ad_check_task, text, audio_bytes, audio_content_type)
-    
+    # Передаем check_id для сохранения результата в БД
+    job = queue.enqueue(process_ad_check_task, text, audio_bytes, audio_content_type, check.id)
+
     # Перенаправляем на страницу ожидания с ID задачи
     return RedirectResponse(url=f"/v2/check/status/{job.id}", status_code=303)
 
 
 @router.get("/v2/check/status/{job_id}", response_class=HTMLResponse, name="web_v2_check_status")
-async def check_status_page(request: Request, job_id: str):
+async def check_status_page(request: Request, job_id: str, db: Session = Depends(get_db)):
     """Страница ожидания результата проверки"""
-    return templates.TemplateResponse("pages/check_status_v2.html", {
-        "request": request, 
-        "job_id": job_id
-    })
+    return templates.TemplateResponse("pages/check_status_v2.html",
+        get_template_context(request, db, job_id=job_id)
+    )
 
 
 @router.get("/api/v2/check/status/{job_id}", name="api_v2_check_status")
@@ -142,7 +248,7 @@ async def check_status_api(job_id: str):
 
 
 @router.get("/v2/check/result/{job_id}", response_class=HTMLResponse, name="web_v2_check_result")
-async def check_result_page(request: Request, job_id: str):
+async def check_result_page(request: Request, job_id: str, db: Session = Depends(get_db)):
     """Страница с результатом проверки"""
     try:
         from rq.job import Job
@@ -153,7 +259,8 @@ async def check_result_page(request: Request, job_id: str):
         if job.is_finished:
             data = job.result
             data["job_id"] = job_id  # Передаем job_id в шаблон для PDF ссылки
-            return templates.TemplateResponse("pages/check_report_v2.html", {"request": request, **data})
+            return templates.TemplateResponse("pages/check_report_v2.html",
+                get_template_context(request, db, **data))
         else:
             # Если задача еще не завершена, перенаправляем на страницу ожидания
             return RedirectResponse(url=f"/v2/check/status/{job_id}", status_code=303)
@@ -190,54 +297,38 @@ async def check_result_pdf(job_id: str):
         return RedirectResponse(url="/v2/check", status_code=303)
 
 
-@router.get("/v2/account", response_class=HTMLResponse, name="web_v2_account")
-async def account_page(request: Request):
-    data = get_account()
-    return templates.TemplateResponse(
-        "pages/account_profile_v2.html",
-        {"request": request, "active": "account", "tab": "profile", "account": data},
-    )
-
-@router.post("/v2/account", response_class=HTMLResponse, name="web_v2_account_submit")
-async def account_submit(
-    request: Request,
-    last_name: str = Form(""),
-    first_name: str = Form(""),
-    email: str = Form(""),
-    avatar: UploadFile | None = File(None),
-):
-    # файл никуда не сохраняем — просто делаем вид, что у нас есть url
-    avatar_url = None
-    if avatar and avatar.filename:
-        avatar_url = f"/static/img/avatars/{avatar.filename}"
-    update_account(
-        {"last_name": last_name, "first_name": first_name, "email": email, "avatar_url": avatar_url}
-    )
-    return RedirectResponse(request.url_for("web_v2_account"), status_code=303)
+# Страница профиля удалена: используем email как отображаемое имя, 
+# и перенаправляем пользователей на подписку/историю/статистику.
 
 @router.get("/v2/laws", response_class=HTMLResponse, name="web_v2_laws")
-async def laws_index(request: Request):
+async def laws_index(request: Request, db: Session = Depends(get_db)):
     data = get_law_index()
     return templates.TemplateResponse(
         "pages/laws_index_v2.html",
-        {"request": request, **data}
+        get_template_context(request, db, **data)
     )
 
 @router.get("/v2/laws/article/{article_id}", response_class=HTMLResponse, name="web_v2_law_article")
-async def laws_article(request: Request, article_id: str):
+async def laws_article(request: Request, article_id: str, db: Session = Depends(get_db)):
     data = get_article(article_id)
     return templates.TemplateResponse(
         "pages/laws_detail_v2.html",
-        {"request": request, **data}
+        get_template_context(request, db, **data)
     )
 
 @router.get("/v2/account/subscription", response_class=HTMLResponse, name="web_v2_account_subscription")
-def account_subscription(request: Request, state: str = "none"):
-    account = get_account()
-    sub = get_subscription() if state != "none" else None
+def account_subscription(request: Request, state: str = "none", db: Session = Depends(get_db)):
+    current_user = get_current_user_from_cookie(request, db)
+    account = get_account(current_user)
+
+    # Получаем реальную подписку пользователя
+    sub = None
+    if current_user:
+        sub = get_subscription(current_user.id, db)
+
     return templates.TemplateResponse(
         "pages/account_subscription_v2.html",
-        {"request": request, "tab": "subscription", "account": account, "sub": sub},
+        get_template_context(request, db, tab="subscription", account=account, sub=sub),
     )
 
 @router.post("/v2/account/subscription/subscribe", name="web_v2_subscribe_start")
@@ -248,22 +339,56 @@ async def subscribe_start(request: Request):
 
 
 @router.get("/v2/account/history", response_class=HTMLResponse, name="web_v2_account_history")
-async def account_history(request: Request):
-    account = get_account()
-    items = list_history()
+async def account_history(request: Request, db: Session = Depends(get_db)):
+    current_user = get_current_user_from_cookie(request, db)
+
+    # Проверяем подписку
+    if not current_user:
+        return RedirectResponse(url="/v2/auth/login", status_code=303)
+
+    subscription_repo = SubscriptionRepository(db)
+    subscription = subscription_repo.get_by_user_id(current_user.id)
+
+    if not subscription or not subscription_repo.is_active(subscription):
+        # Подписка истекла - показываем сообщение
+        account = get_account(current_user)
+        return templates.TemplateResponse(
+            "pages/account_history_v2.html",
+            get_template_context(request, db, tab="history", account=account, items=[], no_subscription=True),
+        )
+
+    account = get_account(current_user)
+    items = list_history(current_user.id, db)
     return templates.TemplateResponse(
         "pages/account_history_v2.html",
-        {"request": request, "tab": "history", "account": account, "items": items},
+        get_template_context(request, db, tab="history", account=account, items=items),
     )
 
 
 @router.get("/v2/account/stats", response_class=HTMLResponse, name="web_v2_account_stats")
-async def account_stats(request: Request):
-    account = get_account()
-    stats = get_stats()
+async def account_stats(request: Request, db: Session = Depends(get_db)):
+    current_user = get_current_user_from_cookie(request, db)
+
+    # Проверяем подписку
+    if not current_user:
+        return RedirectResponse(url="/v2/auth/login", status_code=303)
+
+    subscription_repo = SubscriptionRepository(db)
+    subscription = subscription_repo.get_by_user_id(current_user.id)
+
+    if not subscription or not subscription_repo.is_active(subscription):
+        # Подписка истекла - показываем сообщение
+        account = get_account(current_user)
+        return templates.TemplateResponse(
+            "pages/account_stats_v2.html",
+            get_template_context(request, db, tab="stats", account=account, stats=None, no_subscription=True),
+        )
+
+    account = get_account(current_user)
+    stats = get_stats(current_user.id, db)
     return templates.TemplateResponse(
         "pages/account_stats_v2.html",
-        {"request": request, "tab": "stats", "account": account, "stats": stats},
+        get_template_context(request, db, tab="stats", account=account, stats=stats),
     )
 
 @router.post("/v2/account/subscription/cancel", name="web_v2_subscribe_cancel")
@@ -271,3 +396,187 @@ async def subscribe_cancel_route(request: Request):
     cancel_subscription()
     url = str(request.url_for("web_v2_account_subscription")) + "?state=none"
     return RedirectResponse(url=url, status_code=303)
+
+
+@router.post("/v2/account/subscription/upgrade-to-pro", name="web_v2_upgrade_to_pro")
+async def upgrade_to_pro(request: Request, db: Session = Depends(get_db)):
+    """Переход с trial на Pro подписку"""
+    current_user = get_current_user_from_cookie(request, db)
+    
+    if not current_user:
+        return RedirectResponse(url="/v2/auth/login", status_code=303)
+    
+    subscription_repo = SubscriptionRepository(db)
+    subscription = subscription_repo.get_by_user_id(current_user.id)
+    
+    if subscription and subscription.plan == "trial":
+        # Обновляем подписку на Pro
+        from datetime import datetime, timedelta
+        subscription.plan = "pro"
+        subscription.checks_quota = 20  # 20 проверок в неделю для pro
+        subscription.checks_used = 0  # Сбрасываем счетчик
+        subscription.last_reset_at = datetime.utcnow()  # Устанавливаем время сброса
+        subscription.expires_at = datetime.utcnow() + timedelta(days=30)  # 30 дней подписки
+        subscription.status = "active"
+        db.commit()
+    
+    url = str(request.url_for("web_v2_account_subscription")) + "?state=upgraded"
+    return RedirectResponse(url=url, status_code=303)
+
+
+@router.post("/v2/buy-checks", name="web_v2_buy_checks")
+async def buy_checks(request: Request, db: Session = Depends(get_db)):
+    """Докупка дополнительных проверок"""
+    current_user = get_current_user_from_cookie(request, db)
+
+    if not current_user:
+        return RedirectResponse(url="/v2/auth/login", status_code=303)
+
+    subscription_repo = SubscriptionRepository(db)
+    subscription = subscription_repo.get_by_user_id(current_user.id)
+
+    if not subscription:
+        return RedirectResponse(url="/v2/account/subscription", status_code=303)
+
+    # Добавляем 30 проверок
+    # TODO: В будущем здесь будет интеграция с платежной системой
+    subscription_repo.add_checks(subscription, amount=30)
+
+    # Перенаправляем на страницу подписки с сообщением об успехе
+    return RedirectResponse(url="/v2/account/subscription?purchased=1", status_code=303)
+
+
+@router.get("/v2/check/history/{check_id}/pdf", name="web_v2_history_pdf")
+async def history_check_pdf(check_id: int, request: Request, db: Session = Depends(get_db)):
+    """Скачивание PDF из истории проверок"""
+    current_user = get_current_user_from_cookie(request, db)
+
+    if not current_user:
+        return RedirectResponse(url="/v2/auth/login", status_code=303)
+
+    # Получаем проверку из БД
+    check_repo = CheckRepository(db)
+    check = check_repo.get_by_id(check_id)
+
+    # Проверяем что проверка принадлежит пользователю
+    if not check or check.user_id != current_user.id:
+        return RedirectResponse(url="/v2/account/history", status_code=303)
+
+    # Проверяем что есть результаты
+    if not check.result:
+        return RedirectResponse(url="/v2/account/history", status_code=303)
+
+    # Генерируем PDF из сохраненного результата
+    pdf_bytes = generate_pdf_report(check.result)
+
+    headers = {
+        "Content-Disposition": f"attachment; filename=check_{check_id}.pdf",
+        "Content-Type": "application/pdf",
+    }
+    return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
+
+
+# ============ AUTH ROUTES ============
+
+@router.get("/v2/auth/register", response_class=HTMLResponse, name="web_v2_register")
+async def register_page(request: Request, db: Session = Depends(get_db)):
+    """Страница регистрации"""
+    from ..settings import settings
+    return templates.TemplateResponse(
+        "pages/register_v2.html", 
+        get_template_context(request, db, recaptcha_site_key=settings.RECAPTCHA_SITE_KEY)
+    )
+
+
+@router.post("/v2/auth/register", name="web_v2_register_submit")
+async def register_submit(
+    request: Request,
+    email: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Обработка регистрации"""
+    from ..settings import settings
+    import httpx
+    
+    try:
+        # Получаем reCAPTCHA токен из формы
+        form_data = await request.form()
+        recaptcha_response = form_data.get("g-recaptcha-response", "")
+        
+        # Проверяем reCAPTCHA (если ключи настроены)
+        if settings.RECAPTCHA_SECRET_KEY:
+            if not recaptcha_response:
+                raise ValueError("Пожалуйста, подтвердите, что вы не робот")
+            
+            # Верифицируем капчу через Google API
+            async with httpx.AsyncClient() as client:
+                verify_response = await client.post(
+                    "https://www.google.com/recaptcha/api/siteverify",
+                    data={
+                        "secret": settings.RECAPTCHA_SECRET_KEY,
+                        "response": recaptcha_response
+                    }
+                )
+                result = verify_response.json()
+                
+                if not result.get("success", False):
+                    raise ValueError("Проверка reCAPTCHA не пройдена. Попробуйте еще раз.")
+        
+        # Регистрируем пользователя
+        user_data = UserRegister(email=email, password=password)
+        user = register_user(db, user_data)
+
+        # Создаем response с редиректом
+        response = RedirectResponse(url="/v2/auth/login?registered=1", status_code=303)
+
+        return response
+    except Exception as e:
+        # В случае ошибки возвращаемся на страницу регистрации с сообщением
+        return templates.TemplateResponse(
+            "pages/register_v2.html",
+            get_template_context(request, db, error=str(e), recaptcha_site_key=settings.RECAPTCHA_SITE_KEY),
+            status_code=400
+        )
+
+
+@router.get("/v2/auth/login", response_class=HTMLResponse, name="web_v2_login")
+async def login_page(request: Request, registered: int = 0, db: Session = Depends(get_db)):
+    """Страница входа"""
+    success_message = "Регистрация успешна! Теперь можете войти." if registered else None
+    return templates.TemplateResponse(
+        "pages/login_v2.html",
+        get_template_context(request, db, success_message=success_message)
+    )
+
+
+@router.post("/v2/auth/login", name="web_v2_login_submit")
+async def login_submit(
+    request: Request,
+    email: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Обработка входа"""
+    user = authenticate_user(db, email, password)
+
+    if not user:
+        return templates.TemplateResponse(
+            "pages/login_v2.html",
+            get_template_context(request, db, error="Неверный email или пароль"),
+            status_code=401
+        )
+
+    # Создаем response с редиректом и устанавливаем cookie
+    response = RedirectResponse(url="/", status_code=303)
+    set_auth_cookie(response, user.id)
+
+    return response
+
+
+@router.get("/v2/auth/logout", name="web_v2_logout")
+async def logout(request: Request):
+    """Выход из системы"""
+    response = RedirectResponse(url="/", status_code=303)
+    clear_auth_cookie(response)
+    return response
