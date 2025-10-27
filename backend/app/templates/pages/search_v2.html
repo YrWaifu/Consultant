@@ -12,16 +12,16 @@
 </div>
 
 {% if not query %}
-<div class="text-neutral-500">Введите запрос для поиска по новостям и законодательству.</div>
+<div class="text-neutral-500">Введите запрос для поиска по статьям и законодательству.</div>
 {% else %}
 
-<!-- Результаты по новостям -->
-{% if news_results|length %}
+<!-- Результаты по статьям -->
+{% if article_results|length %}
 <section class="mb-10">
-    <h2 class="text-xl font-semibold mb-4 text-rose-700">📰 Новости ({{ news_results|length }})</h2>
+    <h2 class="text-xl font-semibold mb-4 text-rose-700">📄 Статьи ({{ article_results|length }})</h2>
     <div class="space-y-4">
-        {% for item in news_results %}
-        {% include "components/news_card.html" %}
+        {% for article in article_results %}
+        {% include "components/article_card.html" %}
         {% endfor %}
     </div>
 </section>
@@ -47,7 +47,7 @@
 {% endif %}
 
 <!-- Ничего не найдено -->
-{% if not news_results|length and not law_results|length %}
+{% if not article_results|length and not law_results|length %}
 <div class="text-center py-12">
     <div class="text-6xl mb-4">🔍</div>
     <p class="text-xl text-neutral-600 mb-2">Ничего не найдено</p>

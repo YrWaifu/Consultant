@@ -1,8 +1,12 @@
 from fastapi import APIRouter, Request, Form, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, Response, JSONResponse
 from fastapi.templating import Jinja2Templates
+import json
+import os
 
 from ..services.news_stub import list_news, get_news_detail
+from ..services.article_service import ArticleService
+from ..services.article_file_loader import ArticleFileLoader
 from ..services.laws_stub import get_law_index, get_article, search_laws
 from ..services.account_stub import (
     get_account, update_account,
@@ -21,33 +25,48 @@ async def index(request: Request):
     return templates.TemplateResponse("pages/check_v2.html", {"request": request})
 
 
-@router.get("/v2/news", response_class=HTMLResponse, name="web_v2_news")
-async def news_page(request: Request, q: str | None = None):
-    items = list_news(q)
+@router.get("/v2/articles", response_class=HTMLResponse, name="web_v2_articles")
+async def articles_page(request: Request):
+    article_service = ArticleService()
+    data = article_service.get_articles_homepage()
     return templates.TemplateResponse(
-        "pages/news_list_v2.html",
-        {"request": request, "items": items}
+        "pages/articles_list_v2.html",
+        {"request": request, **data}
     )
 
 
-@router.get("/v2/news/{news_id}", response_class=HTMLResponse, name="web_v2_news_detail")
-async def news_detail_page(request: Request, news_id: int):
-    news = get_news_detail(news_id)
-    if not news:
-        return RedirectResponse(url="/v2/news", status_code=303)
+@router.get("/v2/articles/category/{category_slug}", response_class=HTMLResponse, name="web_v2_articles_category")
+async def articles_category_page(request: Request, category_slug: str):
+    article_service = ArticleService()
+    data = article_service.get_category_articles(category_slug)
+    if not data:
+        return RedirectResponse(url="/v2/articles", status_code=303)
     return templates.TemplateResponse(
-        "pages/news_detail_v2.html",
-        {"request": request, "news": news}
+        "pages/articles_category_v2.html",
+        {"request": request, **data}
+    )
+
+
+@router.get("/v2/articles/{article_slug}", response_class=HTMLResponse, name="web_v2_article_detail")
+async def article_detail_page(request: Request, article_slug: str):
+    article_service = ArticleService()
+    data = article_service.get_article_detail(article_slug)
+    if not data:
+        return RedirectResponse(url="/v2/articles", status_code=303)
+    return templates.TemplateResponse(
+        "pages/article_detail_v2.html",
+        {"request": request, **data}
     )
 
 
 @router.get("/v2/search", response_class=HTMLResponse, name="web_v2_search")
 async def search_page(request: Request, q: str | None = None):
-    news_results = list_news(q) if q else []
+    article_service = ArticleService()
+    article_results = article_service.search_articles(q) if q else []
     law_results = search_laws(q) if q else []
     return templates.TemplateResponse(
         "pages/search_v2.html",
-        {"request": request, "query": q, "news_results": news_results, "law_results": law_results}
+        {"request": request, "query": q, "article_results": article_results, "law_results": law_results}
     )
 
 
@@ -271,3 +290,64 @@ async def subscribe_cancel_route(request: Request):
     cancel_subscription()
     url = str(request.url_for("web_v2_account_subscription")) + "?state=none"
     return RedirectResponse(url=url, status_code=303)
+
+
+# ============ МАРШРУТЫ ДЛЯ ЗАГРУЗКИ СТАТЕЙ ============
+
+@router.post("/admin/articles/upload-json", name="admin_upload_articles_json")
+async def upload_articles_json(file: UploadFile = File(...)):
+    """Загрузка статей из JSON файла"""
+    if not file.filename.endswith('.json'):
+        return JSONResponse({"error": "Файл должен быть в формате JSON"}, status_code=400)
+    
+    try:
+        content = await file.read()
+        data = json.loads(content.decode('utf-8'))
+        
+        # Сохраняем временный файл
+        temp_path = f"temp_{file.filename}"
+        with open(temp_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        
+        # Загружаем статьи
+        loader = ArticleFileLoader()
+        result = loader.load_from_json(temp_path)
+        
+        # Удаляем временный файл
+        os.remove(temp_path)
+        
+        return JSONResponse(result)
+        
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.post("/admin/articles/create-sample", name="admin_create_sample_articles")
+async def create_sample_articles():
+    """Создание примеров статей для демонстрации"""
+    try:
+        loader = ArticleFileLoader()
+        result = loader.create_sample_data()
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.get("/admin/articles/load-from-dir", name="admin_load_articles_from_dir")
+async def load_articles_from_directory(directory_path: str):
+    """Загрузка статей из директории с Markdown файлами"""
+    try:
+        loader = ArticleFileLoader()
+        result = loader.load_from_markdown_directory(directory_path)
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.get("/admin/articles", response_class=HTMLResponse, name="admin_articles")
+async def admin_articles_page(request: Request):
+    """Админ-панель для загрузки статей"""
+    return templates.TemplateResponse(
+        "pages/admin_articles_v2.html",
+        {"request": request}
+    )
