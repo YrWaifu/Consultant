@@ -1,24 +1,21 @@
 from rq import Queue
 from redis import Redis
 from ..settings import settings
+import os
 
 
 redis = Redis.from_url(settings.REDIS_URL)
 queue = Queue("checks", connection=redis)
 
 # Фоновая задача для обработки ML модели
-def process_ad_check_task(text: str | None, media_path: str | None, check_id: int | None = None):
+def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_content_type: str | None, check_id: str | None = None):
     """
     Фоновая задача для обработки проверки рекламы через ML модель.
     Выполняется в отдельном процессе воркера.
-    
-    Args:
-        text: Текст рекламы
-        media_path: Путь к медиафайлу
-        check_id: ID записи проверки в БД для сохранения результата
     """
-    print(f"🚀 Начинаем обработку ML задачи. Check ID: {check_id}, Текст: {text[:100] if text else 'None'}...")
-    
+    print(f"🚀 Начинаем обработку ML задачи. Текст: {text[:100] if text else 'None'}...")
+    print(f"🎵 Аудио: {'есть' if audio_bytes else 'нет'}, тип: {audio_content_type}")
+
     try:
         from ..services.ml_core import run_ml
         from ..repositories.law_repository import LawRepository  
@@ -27,7 +24,7 @@ def process_ad_check_task(text: str | None, media_path: str | None, check_id: in
         
         print("📚 Запускаем ML обработку...")
         # Запускаем ML обработку
-        ml_out = run_ml(text, media_path)
+        ml_out = run_ml(text, audio_bytes, audio_content_type)
         print(f"✅ ML обработка завершена! Результат: {ml_out}")
         
     except Exception as e:
@@ -159,14 +156,14 @@ def process_ad_check_task(text: str | None, media_path: str | None, check_id: in
         
         print("🎉 Отчет сформирован успешно!")
         print(f"🔍 Типы данных в результате: {[(k, type(v).__name__) for k, v in result.items()]}")
-        
+
         # Сохраняем результат в БД если передан check_id
         if check_id:
             try:
                 from ..repositories.check_repository import CheckRepository
                 db = SessionLocal()
                 check_repo = CheckRepository(db)
-                
+
                 # Формируем краткую сводку
                 violations_count = len(result.get('violations', []))
                 if result['is_ok']:
@@ -175,7 +172,7 @@ def process_ad_check_task(text: str | None, media_path: str | None, check_id: in
                     summary = f"⚠️ Обнаружено {violations_count} нарушений"
                 else:
                     summary = f"⚠️ Обнаружено {violations_count} предупреждение(й)"
-                
+
                 # Сохраняем результат
                 check_repo.update_result(
                     check_id=check_id,
@@ -188,7 +185,7 @@ def process_ad_check_task(text: str | None, media_path: str | None, check_id: in
             except Exception as save_error:
                 print(f"⚠️ Ошибка при сохранении в БД: {save_error}")
                 # Не пробрасываем ошибку дальше, т.к. результат все равно вернется
-        
+
         return result
         
     except Exception as e:

@@ -48,22 +48,22 @@ def get_template_context(request: Request, db: Session, **kwargs):
 @router.get("/", response_class=HTMLResponse, name="web_v2_check")
 async def index(request: Request, db: Session = Depends(get_db)):
     current_user = get_current_user_from_cookie(request, db)
-    
+
     # Проверяем подписку
     if not current_user:
         # Гость не может делать проверки
         return templates.TemplateResponse("pages/check_no_access_v2.html", get_template_context(request, db))
-    
+
     subscription_repo = SubscriptionRepository(db)
     subscription = subscription_repo.get_by_user_id(current_user.id)
-    
+
     if not subscription or not subscription_repo.is_active(subscription):
         # Подписка истекла или отсутствует
         return templates.TemplateResponse("pages/check_no_access_v2.html", get_template_context(request, db))
-    
+
     # Передаем информацию о квоте
-    return templates.TemplateResponse("pages/check_v2.html", 
-        get_template_context(request, db, 
+    return templates.TemplateResponse("pages/check_v2.html",
+        get_template_context(request, db,
             checks_used=subscription.checks_used,
             checks_quota=subscription.checks_quota,
             checks_remaining=subscription.checks_quota - subscription.checks_used
@@ -104,22 +104,22 @@ async def search_page(request: Request, q: str | None = None, db: Session = Depe
 @router.get("/v2/check", response_class=HTMLResponse, name="web_v2_check")
 async def check_page(request: Request, db: Session = Depends(get_db)):
     current_user = get_current_user_from_cookie(request, db)
-    
+
     # Проверяем подписку
     if not current_user:
         # Гость не может делать проверки
         return templates.TemplateResponse("pages/check_no_access_v2.html", get_template_context(request, db))
-    
+
     subscription_repo = SubscriptionRepository(db)
     subscription = subscription_repo.get_by_user_id(current_user.id)
-    
+
     if not subscription or not subscription_repo.is_active(subscription):
         # Подписка истекла или отсутствует
         return templates.TemplateResponse("pages/check_no_access_v2.html", get_template_context(request, db))
-    
+
     # Передаем информацию о квоте
-    return templates.TemplateResponse("pages/check_v2.html", 
-        get_template_context(request, db, 
+    return templates.TemplateResponse("pages/check_v2.html",
+        get_template_context(request, db,
             checks_used=subscription.checks_used,
             checks_quota=subscription.checks_quota,
             checks_remaining=subscription.checks_quota - subscription.checks_used
@@ -135,18 +135,26 @@ async def check_submit(
     file: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
+    # Если прикреплен файл, читаем его в байты
+    audio_bytes = None
+    audio_content_type = None
+
+    if file and file.filename:
+        audio_bytes = await file.read()
+        audio_content_type = file.content_type
+
     current_user = get_current_user_from_cookie(request, db)
-    
+
     # Проверяем авторизацию и подписку
     if not current_user:
         return RedirectResponse(url="/v2/auth/login", status_code=303)
-    
+
     subscription_repo = SubscriptionRepository(db)
     subscription = subscription_repo.get_by_user_id(current_user.id)
-    
+
     if not subscription or not subscription_repo.is_active(subscription):
         return RedirectResponse(url="/v2/account/subscription", status_code=303)
-    
+
     # Проверяем доступные проверки
     if not subscription_repo.has_checks_available(subscription):
         # Лимит исчерпан - перенаправляем на страницу подписки
@@ -154,10 +162,10 @@ async def check_submit(
             "pages/check_limit_reached_v2.html",
             get_template_context(request, db, subscription=subscription)
         )
-    
+
     # Увеличиваем счетчик использованных проверок
     subscription_repo.increment_checks(subscription)
-    
+
     # Создаем запись о проверке в БД
     check_repo = CheckRepository(db)
     check = check_repo.create(
@@ -166,11 +174,11 @@ async def check_submit(
         input_media_path=None,  # TODO: обработка файлов
         status="queued"
     )
-    
+
     # Создаем фоновую задачу для обработки ML модели
-    # Передаем check_id для сохранения результата
-    job = queue.enqueue(process_ad_check_task, text, None, check.id)
-    
+    # Передаем check_id для сохранения результата в БД
+    job = queue.enqueue(process_ad_check_task, text, audio_bytes, audio_content_type, check.id)
+
     # Перенаправляем на страницу ожидания с ID задачи
     return RedirectResponse(url=f"/v2/check/status/{job.id}", status_code=303)
 
@@ -178,7 +186,7 @@ async def check_submit(
 @router.get("/v2/check/status/{job_id}", response_class=HTMLResponse, name="web_v2_check_status")
 async def check_status_page(request: Request, job_id: str, db: Session = Depends(get_db)):
     """Страница ожидания результата проверки"""
-    return templates.TemplateResponse("pages/check_status_v2.html", 
+    return templates.TemplateResponse("pages/check_status_v2.html",
         get_template_context(request, db, job_id=job_id)
     )
 
@@ -249,7 +257,7 @@ async def check_result_page(request: Request, job_id: str, db: Session = Depends
         if job.is_finished:
             data = job.result
             data["job_id"] = job_id  # Передаем job_id в шаблон для PDF ссылки
-            return templates.TemplateResponse("pages/check_report_v2.html", 
+            return templates.TemplateResponse("pages/check_report_v2.html",
                 get_template_context(request, db, **data))
         else:
             # Если задача еще не завершена, перенаправляем на страницу ожидания
@@ -335,12 +343,12 @@ async def laws_article(request: Request, article_id: str, db: Session = Depends(
 def account_subscription(request: Request, state: str = "none", db: Session = Depends(get_db)):
     current_user = get_current_user_from_cookie(request, db)
     account = get_account(current_user)
-    
+
     # Получаем реальную подписку пользователя
     sub = None
     if current_user:
         sub = get_subscription(current_user.id, db)
-    
+
     return templates.TemplateResponse(
         "pages/account_subscription_v2.html",
         get_template_context(request, db, tab="subscription", account=account, sub=sub),
@@ -356,14 +364,14 @@ async def subscribe_start(request: Request):
 @router.get("/v2/account/history", response_class=HTMLResponse, name="web_v2_account_history")
 async def account_history(request: Request, db: Session = Depends(get_db)):
     current_user = get_current_user_from_cookie(request, db)
-    
+
     # Проверяем подписку
     if not current_user:
         return RedirectResponse(url="/v2/auth/login", status_code=303)
-    
+
     subscription_repo = SubscriptionRepository(db)
     subscription = subscription_repo.get_by_user_id(current_user.id)
-    
+
     if not subscription or not subscription_repo.is_active(subscription):
         # Подписка истекла - показываем сообщение
         account = get_account(current_user)
@@ -371,7 +379,7 @@ async def account_history(request: Request, db: Session = Depends(get_db)):
             "pages/account_history_v2.html",
             get_template_context(request, db, tab="history", account=account, items=[], no_subscription=True),
         )
-    
+
     account = get_account(current_user)
     items = list_history(current_user.id, db)
     return templates.TemplateResponse(
@@ -383,14 +391,14 @@ async def account_history(request: Request, db: Session = Depends(get_db)):
 @router.get("/v2/account/stats", response_class=HTMLResponse, name="web_v2_account_stats")
 async def account_stats(request: Request, db: Session = Depends(get_db)):
     current_user = get_current_user_from_cookie(request, db)
-    
+
     # Проверяем подписку
     if not current_user:
         return RedirectResponse(url="/v2/auth/login", status_code=303)
-    
+
     subscription_repo = SubscriptionRepository(db)
     subscription = subscription_repo.get_by_user_id(current_user.id)
-    
+
     if not subscription or not subscription_repo.is_active(subscription):
         # Подписка истекла - показываем сообщение
         account = get_account(current_user)
@@ -398,7 +406,7 @@ async def account_stats(request: Request, db: Session = Depends(get_db)):
             "pages/account_stats_v2.html",
             get_template_context(request, db, tab="stats", account=account, stats=None, no_subscription=True),
         )
-    
+
     account = get_account(current_user)
     stats = get_stats(current_user.id, db)
     return templates.TemplateResponse(
@@ -417,20 +425,20 @@ async def subscribe_cancel_route(request: Request):
 async def buy_checks(request: Request, db: Session = Depends(get_db)):
     """Докупка дополнительных проверок"""
     current_user = get_current_user_from_cookie(request, db)
-    
+
     if not current_user:
         return RedirectResponse(url="/v2/auth/login", status_code=303)
-    
+
     subscription_repo = SubscriptionRepository(db)
     subscription = subscription_repo.get_by_user_id(current_user.id)
-    
+
     if not subscription:
         return RedirectResponse(url="/v2/account/subscription", status_code=303)
-    
+
     # Добавляем 30 проверок
     # TODO: В будущем здесь будет интеграция с платежной системой
     subscription_repo.add_checks(subscription, amount=30)
-    
+
     # Перенаправляем на страницу подписки с сообщением об успехе
     return RedirectResponse(url="/v2/account/subscription?purchased=1", status_code=303)
 
@@ -439,25 +447,25 @@ async def buy_checks(request: Request, db: Session = Depends(get_db)):
 async def history_check_pdf(check_id: int, request: Request, db: Session = Depends(get_db)):
     """Скачивание PDF из истории проверок"""
     current_user = get_current_user_from_cookie(request, db)
-    
+
     if not current_user:
         return RedirectResponse(url="/v2/auth/login", status_code=303)
-    
+
     # Получаем проверку из БД
     check_repo = CheckRepository(db)
     check = check_repo.get_by_id(check_id)
-    
+
     # Проверяем что проверка принадлежит пользователю
     if not check or check.user_id != current_user.id:
         return RedirectResponse(url="/v2/account/history", status_code=303)
-    
+
     # Проверяем что есть результаты
     if not check.result:
         return RedirectResponse(url="/v2/account/history", status_code=303)
-    
+
     # Генерируем PDF из сохраненного результата
     pdf_bytes = generate_pdf_report(check.result)
-    
+
     headers = {
         "Content-Disposition": f"attachment; filename=check_{check_id}.pdf",
         "Content-Type": "application/pdf",
@@ -485,10 +493,10 @@ async def register_submit(
     try:
         user_data = UserRegister(nickname=nickname, email=email, password=password)
         user = register_user(db, user_data)
-        
+
         # Создаем response с редиректом
         response = RedirectResponse(url="/v2/auth/login?registered=1", status_code=303)
-        
+
         return response
     except Exception as e:
         # В случае ошибки возвращаемся на страницу регистрации с сообщением
@@ -504,7 +512,7 @@ async def login_page(request: Request, registered: int = 0, db: Session = Depend
     """Страница входа"""
     success_message = "Регистрация успешна! Теперь можете войти." if registered else None
     return templates.TemplateResponse(
-        "pages/login_v2.html", 
+        "pages/login_v2.html",
         get_template_context(request, db, success_message=success_message)
     )
 
@@ -518,18 +526,18 @@ async def login_submit(
 ):
     """Обработка входа"""
     user = authenticate_user(db, email, password)
-    
+
     if not user:
         return templates.TemplateResponse(
             "pages/login_v2.html",
             get_template_context(request, db, error="Неверный email или пароль"),
             status_code=401
         )
-    
+
     # Создаем response с редиректом и устанавливаем cookie
     response = RedirectResponse(url="/", status_code=303)
     set_auth_cookie(response, user.id)
-    
+
     return response
 
 

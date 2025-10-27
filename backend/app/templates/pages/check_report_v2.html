@@ -1,6 +1,6 @@
 {% extends "layouts/base_v2.html" %}
 {% set active = "check" %}
-{% block title %}Отчёт о проверке — ИИ модератор рекламы{% endblock %}
+{% block title %}Отчёт о проверке — Legal ADvice{% endblock %}
 
 {% block content %}
 <a href="{{ url_for('web_v2_check') }}"
@@ -135,6 +135,6 @@
 </div>
 
 <p class="text-center text-neutral-700 mt-4">
-    Отчёт сохранён в <a href="#" class="text-rose-600 underline">Истории проверок</a>
+    Отчёт сохранён в <a href="{{ url_for('web_v2_account_history') }}" class="text-rose-600 underline">Истории проверок</a>
 </p>
 {% endblock %}
