@@ -481,7 +481,11 @@ async def history_check_pdf(check_id: int, request: Request, db: Session = Depen
 @router.get("/v2/auth/register", response_class=HTMLResponse, name="web_v2_register")
 async def register_page(request: Request, db: Session = Depends(get_db)):
     """Страница регистрации"""
-    return templates.TemplateResponse("pages/register_v2.html", get_template_context(request, db))
+    from ..settings import settings
+    return templates.TemplateResponse(
+        "pages/register_v2.html", 
+        get_template_context(request, db, recaptcha_site_key=settings.RECAPTCHA_SITE_KEY)
+    )
 
 
 @router.post("/v2/auth/register", name="web_v2_register_submit")
@@ -492,7 +496,34 @@ async def register_submit(
     db: Session = Depends(get_db)
 ):
     """Обработка регистрации"""
+    from ..settings import settings
+    import httpx
+    
     try:
+        # Получаем reCAPTCHA токен из формы
+        form_data = await request.form()
+        recaptcha_response = form_data.get("g-recaptcha-response", "")
+        
+        # Проверяем reCAPTCHA (если ключи настроены)
+        if settings.RECAPTCHA_SECRET_KEY:
+            if not recaptcha_response:
+                raise ValueError("Пожалуйста, подтвердите, что вы не робот")
+            
+            # Верифицируем капчу через Google API
+            async with httpx.AsyncClient() as client:
+                verify_response = await client.post(
+                    "https://www.google.com/recaptcha/api/siteverify",
+                    data={
+                        "secret": settings.RECAPTCHA_SECRET_KEY,
+                        "response": recaptcha_response
+                    }
+                )
+                result = verify_response.json()
+                
+                if not result.get("success", False):
+                    raise ValueError("Проверка reCAPTCHA не пройдена. Попробуйте еще раз.")
+        
+        # Регистрируем пользователя
         user_data = UserRegister(email=email, password=password)
         user = register_user(db, user_data)
 
@@ -504,7 +535,7 @@ async def register_submit(
         # В случае ошибки возвращаемся на страницу регистрации с сообщением
         return templates.TemplateResponse(
             "pages/register_v2.html",
-            get_template_context(request, db, error=str(e)),
+            get_template_context(request, db, error=str(e), recaptcha_site_key=settings.RECAPTCHA_SITE_KEY),
             status_code=400
         )
 

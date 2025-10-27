@@ -1,6 +1,10 @@
 {% extends "layouts/base_v2.html" %}
 {% block title %}Регистрация — ИИ модератор рекламы{% endblock %}
 
+{% block head %}
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-md mx-auto mt-8">
     <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 p-8">
@@ -52,6 +56,11 @@
                     oninput="this.setCustomValidity('')"
                 >
             </div>
+
+            <!-- reCAPTCHA -->
+            {% if recaptcha_site_key %}
+            <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" data-size="normal"></div>
+            {% endif %}
 
             <!-- Кнопка регистрации -->
             <button 
