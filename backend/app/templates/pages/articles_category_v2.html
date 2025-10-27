@@ -29,7 +29,7 @@
         <div class="flex items-start gap-4">
             <div class="flex-1">
                 <div class="text-sm text-neutral-500 mb-2">
-                    {{ article.published_at.strftime('%d %B %Y') }}
+                    {{format_date(article.published_at, format='d MMMM yyyy', locale='ru')}}
                     {% if article.author %}
                     • {{ article.author }}
                     {% endif %}
