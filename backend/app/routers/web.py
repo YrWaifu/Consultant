@@ -51,31 +51,9 @@ def get_template_context(request: Request, db: Session, **kwargs):
     }
 
 
-@router.get("/", response_class=HTMLResponse, name="web_v2_check")
-async def index(request: Request, db: Session = Depends(get_db)):
-    current_user = get_current_user_from_cookie(request, db)
-
-    # Проверяем подписку
-    if not current_user:
-        # Гость не может делать проверки
-        return templates.TemplateResponse("pages/check_no_access_v2.html", get_template_context(request, db))
-
-    subscription_repo = SubscriptionRepository(db)
-    subscription = subscription_repo.get_by_user_id(current_user.id)
-
-    if not subscription or not subscription_repo.is_active(subscription):
-        # Подписка истекла или отсутствует - передаем информацию о подписке
-        return templates.TemplateResponse("pages/check_no_access_v2.html",
-            get_template_context(request, db, subscription=subscription))
-
-    # Передаем информацию о квоте
-    return templates.TemplateResponse("pages/check_v2.html",
-        get_template_context(request, db,
-            checks_used=subscription.checks_used,
-            checks_quota=subscription.checks_quota,
-            checks_remaining=subscription.checks_quota - subscription.checks_used
-        )
-    )
+@router.get("/", name="web_root")
+async def index():
+    return RedirectResponse(url="/v2/articles", status_code=303)
 
 
 @router.get("/v2/articles", response_class=HTMLResponse, name="web_v2_articles")
