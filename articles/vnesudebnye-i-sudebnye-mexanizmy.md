@@ -2,7 +2,6 @@
 title: "Внесудебные и судебные механизмы пресечения нарушений рекламного законодательства"
 slug: "vnesudebnye-i-sudebnye-mexanizmy"
 excerpt: "Алгоритмы взаимодействия с ФАС и судом в делах о рекламе."
-author: "Метелькова Вероника"
 category: "ad-check-knowledge"
 sort_order: 3
 ---

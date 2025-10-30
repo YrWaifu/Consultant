@@ -2,7 +2,6 @@
 title: "Гроб для подружки с дизайном Лабубу"
 slug: "grob-dlya-podruzhki-s-dizajnom-labubu"
 excerpt: "Креативный подход похоронного бюро вызвал споры в соцсетях — этично ли продвигать такие услуги в Instagram?"
-author: "Метелькова Вероника"
 category: "interesting-cases"
 sort_order: 1
 ---

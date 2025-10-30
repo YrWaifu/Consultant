@@ -18,10 +18,7 @@
     <!-- Основная статья -->
     <article class="rounded-2xl border border-rose-400 bg-white p-6 md:p-8 mb-8">
         <div class="text-sm text-neutral-500 mb-4">
-            {{format_date(article.published_at, format='d MMMM yyyy', locale='ru')}}
-            {% if article.author %}
-            • {{ article.author }}
-            {% endif %}
+            {{format_date(article.created_at, format='d MMMM yyyy', locale='ru')}}
             {% if article.view_count > 0 %}
             • {{ article.view_count }} просмотров
             {% endif %}
@@ -36,15 +33,11 @@
         {% endif %}
 
         <div class="prose prose-neutral max-w-none">
-            {% if article.content_html %}
-                {{ article.content_html|safe }}
-            {% else %}
-                <div class="space-y-4 text-neutral-800 leading-relaxed">
-                    {% for paragraph in article.content.split('\n\n') %}
-                    <p>{{ paragraph }}</p>
-                    {% endfor %}
-                </div>
-            {% endif %}
+            <div class="space-y-4 text-neutral-800 leading-relaxed">
+                {% for paragraph in article.content.split('\n\n') %}
+                <p>{{ paragraph }}</p>
+                {% endfor %}
+            </div>
         </div>
     </article>
 
@@ -56,7 +49,7 @@
             {% for related in related_articles %}
             <article class="rounded-xl border border-rose-300/70 bg-white p-4 shadow-[0_0_0_1px_rgba(244,63,94,0.05)] hover:shadow-md transition-shadow">
                 <div class="text-xs text-neutral-500 mb-2">
-                    {{format_date(article.published_at, format='d MMMM yyyy', locale='ru')}}
+                    {{format_date(article.created_at, format='d MMMM yyyy', locale='ru')}}
                 </div>
                 <h3 class="font-semibold leading-snug mb-2">
                     <a href="{{ url_for('web_v2_article_detail', article_slug=related.slug) }}" 

@@ -2,7 +2,6 @@
 title: "Перечень нарушений рекламного законодательства"
 slug: "perechen-narushenij"
 excerpt: "Свод основных нарушений, выявляемых ФАС в рекламе в 2024–2025 годах."
-author: "Метелькова Вероника"
 category: "ad-check-knowledge"
 sort_order: 4
 ---

@@ -2,7 +2,6 @@
 title: "Вставь мне"
 slug: "vstav-mne"
 excerpt: "Тюменская стоматология наказана за непристойную рекламу с двусмысленным лозунгом."
-author: "Метелькова Вероника"
 category: "interesting-cases"
 sort_order: 3
 ---

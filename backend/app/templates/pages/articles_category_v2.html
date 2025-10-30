@@ -29,10 +29,7 @@
         <div class="flex items-start gap-4">
             <div class="flex-1">
                 <div class="text-sm text-neutral-500 mb-2">
-                    {{format_date(article.published_at, format='d MMMM yyyy', locale='ru')}}
-                    {% if article.author %}
-                    • {{ article.author }}
-                    {% endif %}
+                    {{format_date(article.created_at, format='d MMMM yyyy', locale='ru')}}
                 </div>
                 <h2 class="text-lg font-semibold mb-2">
                     <a href="{{ url_for('web_v2_article_detail', article_slug=article.slug) }}" 

@@ -1,10 +1,8 @@
 import json
-import os
 import re
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import Dict, Any
 from pathlib import Path
-from ..models import Article, ArticleCategory
 from ..repositories.article_repository import ArticleRepository
 from ..db import SessionLocal
 
@@ -156,14 +154,14 @@ class ArticleFileLoader:
                     frontmatter = self._parse_simple_frontmatter(parts[1])
                     content = parts[2].strip()
         
-        # Извлекаем заголовок из первого заголовка Markdown
+        # Извлекаем заголовок из первого заголовка Markdown, если он не указан в шапке
         title_match = re.match(r'^#\s+(.+)$', content, re.MULTILINE)
         title = title_match.group(1) if title_match else file_path.stem
         
-        # Создаем slug из заголовка
+        # Создаем slug из заголовка, если он не указан
         slug = self._create_slug(title)
         
-        # Извлекаем краткое описание (первый абзац)
+        # Извлекаем краткое описание (первый абзац), если оно не указано в шапке
         excerpt = None
         paragraphs = content.split('\n\n')
         for para in paragraphs:
@@ -177,10 +175,9 @@ class ArticleFileLoader:
             'slug': frontmatter.get('slug', slug),
             'excerpt': frontmatter.get('excerpt', excerpt),
             'content': content,
-            'content_html': None,  # Можно добавить конвертацию в HTML
-            'author': frontmatter.get('author'),
             'category': frontmatter.get('category', 'ad-check-knowledge'),
-            'sort_order': frontmatter.get('sort_order', 0)
+            'sort_order': frontmatter.get('sort_order', 0),
+            'created_at': self._parse_date(frontmatter.get('created_at', None)),
         }
     
     def _parse_simple_frontmatter(self, frontmatter_text: str) -> Dict[str, Any]:

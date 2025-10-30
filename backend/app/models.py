@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, Date, ForeignKey, JSON, Enum, Boolean
 from sqlalchemy.orm import relationship
-from datetime import datetime, date
+from datetime import datetime
 from .db import Base
 import enum
 
@@ -119,8 +119,7 @@ class ArticleCategory(Base):
     description = Column(Text)  # Описание категории
     icon = Column(String(100))  # Иконка для отображения (например, "📌")
     sort_order = Column(Integer, default=0)  # Порядок сортировки
-    is_active = Column(Boolean, default=True)
-    
+
     # Связь со статьями
     articles = relationship("Article", back_populates="category", cascade="all, delete-orphan")
 
@@ -137,15 +136,12 @@ class Article(Base):
     slug = Column(String(512), nullable=False, unique=True)  # URL-слаг
     excerpt = Column(Text)  # Краткое описание
     content = Column(Text, nullable=False)  # Полный текст статьи
-    content_html = Column(Text)  # HTML версия контента
-    author = Column(String(255))  # Автор статьи
-    published_at = Column(DateTime, default=datetime.utcnow)  # Дата публикации
+
     created_at = Column(DateTime, default=datetime.utcnow)  # Дата создания
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # Дата обновления
-    is_published = Column(Boolean, default=True)  # Опубликована ли статья
+
     sort_order = Column(Integer, default=0)  # Порядок сортировки в категории
     view_count = Column(Integer, default=0)  # Количество просмотров
-    meta = Column(JSON)  # Дополнительные метаданные
     
     # Связь с категорией
     category = relationship("ArticleCategory", back_populates="articles")

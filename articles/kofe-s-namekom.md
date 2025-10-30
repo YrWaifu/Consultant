@@ -2,7 +2,6 @@
 title: "Кофе с намеком"
 slug: "kofe-s-namekom"
 excerpt: "Дизайн кофейных стаканов с эротическим подтекстом вызвал общественную дискуссию и удаление постов."
-author: "Метелькова Вероника"
 category: "interesting-cases"
 sort_order: 2
 ---
