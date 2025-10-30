@@ -63,6 +63,13 @@ def main():
         from backend.app.services.law_parser import parse_and_save_law
         parse_and_save_law()
         print("✅ Парсинг завершён!")
+
+    elif command == "add-articles":
+        # Запуск добавления статей вручную
+        print("🔍 Начинаю добавлять статьи в бд...")
+        from backend.app.init_articles import check_and_init_articles
+        check_and_init_articles()
+        print("✅ Статьи добавлены в бд!")
     
     else:
         print(f"❌ Неизвестная команда: {command}")

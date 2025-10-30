@@ -1,0 +1,172 @@
+{% extends "layouts/base_v2.html" %}
+{% block title %}Админ-панель: Загрузка статей — Реквизор{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-2xl font-semibold mb-8">Загрузка статей</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Загрузка из JSON -->
+        <div class="bg-white rounded-xl border border-rose-200 p-6">
+            <h2 class="text-lg font-semibold mb-4">📄 Загрузка из JSON файла</h2>
+            <p class="text-neutral-600 mb-4">
+                Загрузите JSON файл с категориями и статьями в формате, указанном в документации.
+            </p>
+            
+            <form id="json-upload-form" enctype="multipart/form-data">
+                <div class="mb-4">
+                    <input type="file" id="json-file" name="file" accept=".json" 
+                           class="block w-full text-sm text-neutral-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100">
+                </div>
+                <button type="submit" 
+                        class="w-full bg-rose-600 text-white py-2 px-4 rounded-lg hover:bg-rose-700 transition-colors">
+                    Загрузить статьи
+                </button>
+            </form>
+            
+            <div id="json-result" class="mt-4 hidden"></div>
+        </div>
+        
+        <!-- Создание примеров -->
+        <div class="bg-white rounded-xl border border-rose-200 p-6">
+            <h2 class="text-lg font-semibold mb-4">🎯 Создать примеры статей</h2>
+            <p class="text-neutral-600 mb-4">
+                Создать демонстрационные статьи для тестирования функциональности.
+            </p>
+            
+            <button id="create-sample-btn" 
+                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                Создать примеры
+            </button>
+            
+            <div id="sample-result" class="mt-4 hidden"></div>
+        </div>
+    </div>
+    
+    <!-- Загрузка из директории -->
+    <div class="mt-8 bg-white rounded-xl border border-rose-200 p-6">
+        <h2 class="text-lg font-semibold mb-4">📁 Загрузка из директории Markdown</h2>
+        <p class="text-neutral-600 mb-4">
+            Загрузите статьи из директории с Markdown файлами. Каждый файл должен содержать frontmatter с метаданными.
+        </p>
+        
+        <div class="flex gap-4">
+            <input type="text" id="directory-path" placeholder="Путь к директории с .md файлами" 
+                   class="flex-1 px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500">
+            <button id="load-directory-btn" 
+                    class="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                Загрузить из директории
+            </button>
+        </div>
+        
+        <div id="directory-result" class="mt-4 hidden"></div>
+    </div>
+    
+    <!-- Ссылки на примеры -->
+    <div class="mt-8 bg-neutral-50 rounded-xl p-6">
+        <h3 class="text-lg font-semibold mb-4">📋 Примеры файлов</h3>
+        <div class="space-y-2">
+            <p><strong>JSON формат:</strong> <code>sample_articles.json</code> - пример структуры для загрузки статей</p>
+            <p><strong>Markdown формат:</strong> <code>sample_article.md</code> - пример статьи с frontmatter</p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Загрузка JSON файла
+document.getElementById('json-upload-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    const fileInput = document.getElementById('json-file');
+    const resultDiv = document.getElementById('json-result');
+    
+    if (!fileInput.files[0]) {
+        showResult(resultDiv, 'Выберите файл для загрузки', 'error');
+        return;
+    }
+    
+    formData.append('file', fileInput.files[0]);
+    
+    try {
+        const response = await fetch('/admin/articles/upload-json', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        showResult(resultDiv, result, response.ok ? 'success' : 'error');
+    } catch (error) {
+        showResult(resultDiv, `Ошибка: ${error.message}`, 'error');
+    }
+});
+
+// Создание примеров
+document.getElementById('create-sample-btn').addEventListener('click', async () => {
+    const resultDiv = document.getElementById('sample-result');
+    
+    try {
+        const response = await fetch('/admin/articles/create-sample', {
+            method: 'POST'
+        });
+        
+        const result = await response.json();
+        showResult(resultDiv, result, response.ok ? 'success' : 'error');
+    } catch (error) {
+        showResult(resultDiv, `Ошибка: ${error.message}`, 'error');
+    }
+});
+
+// Загрузка из директории
+document.getElementById('load-directory-btn').addEventListener('click', async () => {
+    const pathInput = document.getElementById('directory-path');
+    const resultDiv = document.getElementById('directory-result');
+    
+    if (!pathInput.value.trim()) {
+        showResult(resultDiv, 'Введите путь к директории', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/admin/articles/load-from-dir?directory_path=${encodeURIComponent(pathInput.value)}`);
+        const result = await response.json();
+        showResult(resultDiv, result, response.ok ? 'success' : 'error');
+    } catch (error) {
+        showResult(resultDiv, `Ошибка: ${error.message}`, 'error');
+    }
+});
+
+function showResult(element, data, type) {
+    element.classList.remove('hidden');
+    
+    let html = '';
+    if (type === 'success') {
+        html = `<div class="p-4 bg-green-50 border border-green-200 rounded-lg">`;
+        html += `<h4 class="font-semibold text-green-800 mb-2">Успешно!</h4>`;
+        if (data.categories_created) {
+            html += `<p class="text-green-700">Создано категорий: ${data.categories_created}</p>`;
+        }
+        if (data.articles_created) {
+            html += `<p class="text-green-700">Создано статей: ${data.articles_created}</p>`;
+        }
+        if (data.errors && data.errors.length > 0) {
+            html += `<div class="mt-2">`;
+            html += `<p class="text-orange-700 font-medium">Предупреждения:</p>`;
+            html += `<ul class="text-orange-600 text-sm">`;
+            data.errors.forEach(error => {
+                html += `<li>• ${error}</li>`;
+            });
+            html += `</ul></div>`;
+        }
+        html += `</div>`;
+    } else {
+        html = `<div class="p-4 bg-red-50 border border-red-200 rounded-lg">`;
+        html += `<h4 class="font-semibold text-red-800 mb-2">Ошибка!</h4>`;
+        html += `<p class="text-red-700">${data.error || JSON.stringify(data)}</p>`;
+        html += `</div>`;
+    }
+    
+    element.innerHTML = html;
+}
+</script>
+{% endblock %}

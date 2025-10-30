@@ -2,8 +2,11 @@ from fastapi import APIRouter, Request, Form, UploadFile, File, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse, Response, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+import json
+import os
 
-from ..services.news_stub import list_news, get_news_detail
+from ..services.article_service import ArticleService
+from ..services.article_file_loader import ArticleFileLoader
 from ..services.laws_stub import get_law_index, get_article, search_laws
 from ..services.account_stub import (
     get_account,
@@ -21,8 +24,11 @@ from ..services.auth_service import (
 from ..schemas import UserRegister, UserLogin
 from ..db import SessionLocal
 
+from babel.dates import format_date
+
 router = APIRouter()
 templates = Jinja2Templates(directory="backend/app/templates")
+templates.env.globals['format_date'] = format_date
 
 
 # Dependency для получения сессии БД
@@ -59,7 +65,7 @@ async def index(request: Request, db: Session = Depends(get_db)):
 
     if not subscription or not subscription_repo.is_active(subscription):
         # Подписка истекла или отсутствует - передаем информацию о подписке
-        return templates.TemplateResponse("pages/check_no_access_v2.html", 
+        return templates.TemplateResponse("pages/check_no_access_v2.html",
             get_template_context(request, db, subscription=subscription))
 
     # Передаем информацию о квоте
@@ -72,33 +78,48 @@ async def index(request: Request, db: Session = Depends(get_db)):
     )
 
 
-@router.get("/v2/news", response_class=HTMLResponse, name="web_v2_news")
-async def news_page(request: Request, q: str | None = None, db: Session = Depends(get_db)):
-    items = list_news(q)
+@router.get("/v2/articles", response_class=HTMLResponse, name="web_v2_articles")
+async def articles_page(request: Request):
+    article_service = ArticleService()
+    data = article_service.get_articles_homepage()
     return templates.TemplateResponse(
-        "pages/news_list_v2.html",
-        get_template_context(request, db, items=items)
+        "pages/articles_list_v2.html",
+        {"request": request, **data}
     )
 
 
-@router.get("/v2/news/{news_id}", response_class=HTMLResponse, name="web_v2_news_detail")
-async def news_detail_page(request: Request, news_id: int, db: Session = Depends(get_db)):
-    news = get_news_detail(news_id)
-    if not news:
-        return RedirectResponse(url="/v2/news", status_code=303)
+@router.get("/v2/articles/category/{category_slug}", response_class=HTMLResponse, name="web_v2_articles_category")
+async def articles_category_page(request: Request, category_slug: str):
+    article_service = ArticleService()
+    data = article_service.get_category_articles(category_slug)
+    if not data:
+        return RedirectResponse(url="/v2/articles", status_code=303)
     return templates.TemplateResponse(
-        "pages/news_detail_v2.html",
-        get_template_context(request, db, news=news)
+        "pages/articles_category_v2.html",
+        {"request": request, **data}
+    )
+
+
+@router.get("/v2/articles/{article_slug}", response_class=HTMLResponse, name="web_v2_article_detail")
+async def article_detail_page(request: Request, article_slug: str):
+    article_service = ArticleService()
+    data = article_service.get_article_detail(article_slug)
+    if not data:
+        return RedirectResponse(url="/v2/articles", status_code=303)
+    return templates.TemplateResponse(
+        "pages/article_detail_v2.html",
+        {"request": request, **data}
     )
 
 
 @router.get("/v2/search", response_class=HTMLResponse, name="web_v2_search")
-async def search_page(request: Request, q: str | None = None, db: Session = Depends(get_db)):
-    news_results = list_news(q) if q else []
+async def search_page(request: Request, q: str | None = None):
+    article_service = ArticleService()
+    article_results = article_service.search_articles(q) if q else []
     law_results = search_laws(q) if q else []
     return templates.TemplateResponse(
         "pages/search_v2.html",
-        get_template_context(request, db, query=q, news_results=news_results, law_results=law_results)
+        {"request": request, "query": q, "article_results": article_results, "law_results": law_results}
     )
 
 
@@ -116,7 +137,7 @@ async def check_page(request: Request, db: Session = Depends(get_db)):
 
     if not subscription or not subscription_repo.is_active(subscription):
         # Подписка истекла или отсутствует - передаем информацию о подписке
-        return templates.TemplateResponse("pages/check_no_access_v2.html", 
+        return templates.TemplateResponse("pages/check_no_access_v2.html",
             get_template_context(request, db, subscription=subscription))
 
     # Передаем информацию о квоте
@@ -297,7 +318,7 @@ async def check_result_pdf(job_id: str):
         return RedirectResponse(url="/v2/check", status_code=303)
 
 
-# Страница профиля удалена: используем email как отображаемое имя, 
+# Страница профиля удалена: используем email как отображаемое имя,
 # и перенаправляем пользователей на подписку/историю/статистику.
 
 @router.get("/v2/laws", response_class=HTMLResponse, name="web_v2_laws")
@@ -402,13 +423,13 @@ async def subscribe_cancel_route(request: Request):
 async def upgrade_to_pro(request: Request, db: Session = Depends(get_db)):
     """Переход с trial на Pro подписку"""
     current_user = get_current_user_from_cookie(request, db)
-    
+
     if not current_user:
         return RedirectResponse(url="/v2/auth/login", status_code=303)
-    
+
     subscription_repo = SubscriptionRepository(db)
     subscription = subscription_repo.get_by_user_id(current_user.id)
-    
+
     if subscription and subscription.plan == "trial":
         # Обновляем подписку на Pro
         from datetime import datetime, timedelta
@@ -419,7 +440,7 @@ async def upgrade_to_pro(request: Request, db: Session = Depends(get_db)):
         subscription.expires_at = datetime.utcnow() + timedelta(days=30)  # 30 дней подписки
         subscription.status = "active"
         db.commit()
-    
+
     url = str(request.url_for("web_v2_account_subscription")) + "?state=upgraded"
     return RedirectResponse(url=url, status_code=303)
 
@@ -483,7 +504,7 @@ async def register_page(request: Request, db: Session = Depends(get_db)):
     """Страница регистрации"""
     from ..settings import settings
     return templates.TemplateResponse(
-        "pages/register_v2.html", 
+        "pages/register_v2.html",
         get_template_context(request, db, recaptcha_site_key=settings.RECAPTCHA_SITE_KEY)
     )
 
@@ -498,17 +519,17 @@ async def register_submit(
     """Обработка регистрации"""
     from ..settings import settings
     import httpx
-    
+
     try:
         # Получаем reCAPTCHA токен из формы
         form_data = await request.form()
         recaptcha_response = form_data.get("g-recaptcha-response", "")
-        
+
         # Проверяем reCAPTCHA (если ключи настроены)
         if settings.RECAPTCHA_SECRET_KEY:
             if not recaptcha_response:
                 raise ValueError("Пожалуйста, подтвердите, что вы не робот")
-            
+
             # Верифицируем капчу через Google API
             async with httpx.AsyncClient() as client:
                 verify_response = await client.post(
@@ -519,10 +540,10 @@ async def register_submit(
                     }
                 )
                 result = verify_response.json()
-                
+
                 if not result.get("success", False):
                     raise ValueError("Проверка reCAPTCHA не пройдена. Попробуйте еще раз.")
-        
+
         # Регистрируем пользователя
         user_data = UserRegister(email=email, password=password)
         user = register_user(db, user_data)
@@ -580,3 +601,52 @@ async def logout(request: Request):
     response = RedirectResponse(url="/", status_code=303)
     clear_auth_cookie(response)
     return response
+
+# ============ МАРШРУТЫ ДЛЯ ЗАГРУЗКИ СТАТЕЙ ============
+
+@router.post("/admin/articles/upload-json", name="admin_upload_articles_json")
+async def upload_articles_json(file: UploadFile = File(...)):
+    """Загрузка статей из JSON файла"""
+    if not file.filename.endswith('.json'):
+        return JSONResponse({"error": "Файл должен быть в формате JSON"}, status_code=400)
+
+    try:
+        content = await file.read()
+        data = json.loads(content.decode('utf-8'))
+
+        # Сохраняем временный файл
+        temp_path = f"temp_{file.filename}"
+        with open(temp_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
+        # Загружаем статьи
+        loader = ArticleFileLoader()
+        result = loader.load_from_json(temp_path)
+
+        # Удаляем временный файл
+        os.remove(temp_path)
+
+        return JSONResponse(result)
+
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.get("/admin/articles/load-from-dir", name="admin_load_articles_from_dir")
+async def load_articles_from_directory(directory_path: str):
+    """Загрузка статей из директории с Markdown файлами"""
+    try:
+        loader = ArticleFileLoader()
+        result = loader.load_from_markdown_directory(directory_path)
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.get("/admin/articles", response_class=HTMLResponse, name="admin_articles")
+async def admin_articles_page(request: Request):
+    """Админ-панель для загрузки статей"""
+    return templates.TemplateResponse(
+        "pages/admin_articles_v2.html",
+        {"request": request}
+    )

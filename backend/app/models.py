@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, Date, ForeignKey, JSON, Enum, Boolean
 from sqlalchemy.orm import relationship
-from datetime import datetime, date
+from datetime import datetime
 from .db import Base
 import enum
 
@@ -118,3 +118,45 @@ class LawArticle(Base):
     
     version = relationship("LawVersion", back_populates="articles")
     chapter = relationship("LawChapter", backref="chapter_articles")
+
+
+# ============ МОДЕЛИ ДЛЯ СТАТЕЙ ============
+
+class ArticleCategory(Base):
+    """
+    Категории статей (например, "Нужно знать при проверке рекламы", "Обзоры от юристов", "Интересные кейсы")
+    """
+    __tablename__ = "article_categories"
+    
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)  # "Нужно знать при проверке рекламы"
+    slug = Column(String(255), nullable=False, unique=True)  # "ad-check-knowledge"
+    description = Column(Text)  # Описание категории
+    icon = Column(String(100))  # Иконка для отображения (например, "📌")
+    sort_order = Column(Integer, default=0)  # Порядок сортировки
+
+    # Связь со статьями
+    articles = relationship("Article", back_populates="category", cascade="all, delete-orphan")
+
+
+class Article(Base):
+    """
+    Статьи для раздела "Полезные статьи"
+    """
+    __tablename__ = "articles"
+    
+    id = Column(Integer, primary_key=True)
+    category_id = Column(Integer, ForeignKey("article_categories.id"), nullable=False)
+    title = Column(String(512), nullable=False)  # Заголовок статьи
+    slug = Column(String(512), nullable=False, unique=True)  # URL-слаг
+    excerpt = Column(Text)  # Краткое описание
+    content = Column(Text, nullable=False)  # Полный текст статьи
+
+    created_at = Column(DateTime, default=datetime.utcnow)  # Дата создания
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # Дата обновления
+
+    sort_order = Column(Integer, default=0)  # Порядок сортировки в категории
+    view_count = Column(Integer, default=0)  # Количество просмотров
+    
+    # Связь с категорией
+    category = relationship("ArticleCategory", back_populates="articles")

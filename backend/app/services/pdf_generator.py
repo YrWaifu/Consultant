@@ -126,7 +126,7 @@ def generate_pdf_report(report_data: dict) -> bytes:
         story.append(Spacer(1, 20))
 
 
-    story.append(Paragraph("Legal ADvice не проверяет рекламу на недостоверность. Предлагаем Вам ознакомиться "
+    story.append(Paragraph("Реквизор не проверяет рекламу на недостоверность. Предлагаем Вам ознакомиться "
                            "с критериями оценки самостоятельно в конце отчёта", normal_style))
 
     # Информация о проверке

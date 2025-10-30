@@ -195,3 +195,12 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
         # Пробрасываем ошибку дальше
         raise e
 
+
+# Фоновая задача для инициализации статей
+
+def init_articles_task():
+    print("🔍 Запуск заливки статей в БД...")
+    from backend.app.init_articles import check_and_init_articles
+    result = check_and_init_articles()
+    print(f"✅ Итог заливки статей: {result}")
+    return result

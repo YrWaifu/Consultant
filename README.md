@@ -22,11 +22,17 @@ python manage.py parse-law
 # Ручной запуск парсера
 docker-compose exec api python manage.py parse-law
 
+# Ручное добавление статей
+docker-compose exec api python manage.py add-articles 
+
 # Очистить кеш редиса
 docker-compose exec redis redis-cli FLUSHALL
 
 # Пример очистки бд 
 docker-compose exec db psql -U postgres -d adlaw -c "DELETE FROM law_articles; DELETE FROM law_chapters; DELETE FROM law_versions;"   
+
+# Удаление статей
+docker-compose exec db psql -U postgres -d adlaw -c "DELETE FROM articles; DELETE FROM article_categories;"
 ```
 
 Открыть: http://localhost:8000
@@ -72,12 +78,15 @@ npm run tw:dev
 ## Структура БД
 
 ```
-law_versions       # Версии закона с датами
-├── law_articles   # Статьи (для проверки нарушений)
-└── law_chapters   # Главы (структура закона)
+law_versions        # Версии закона с датами
+├── law_articles    # Статьи (для проверки нарушений)
+└── law_chapters    # Главы (структура закона)
 
-users              # Пользователи
-checks             # История проверок рекламы
+users               # Пользователи
+checks              # История проверок рекламы
+
+articles            # Статьи от юристов
+article_categories  # Категории статей от юристов
 ```
 
 **Важно**: Каждая проверка привязана к версии закона на дату проверки (юридическая корректность).
@@ -94,6 +103,12 @@ http://localhost:8000/v2/report?case=good
 
 # API документация
 http://localhost:8000/docs
+
+# Админские маршруты
+GET /admin/articles - админ-панель
+POST /admin/articles/upload-json - загрузка JSON файла
+POST /admin/articles/create-sample - создание примеров
+GET /admin/articles/load-from-dir - загрузка из директории
 
 # Проверка БД
 docker-compose exec db psql -U postgres -d adlaw
