@@ -79,47 +79,49 @@ async def index(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/v2/articles", response_class=HTMLResponse, name="web_v2_articles")
-async def articles_page(request: Request):
+async def articles_page(request: Request, db: Session = Depends(get_db)):
     article_service = ArticleService()
     data = article_service.get_articles_homepage()
     return templates.TemplateResponse(
         "pages/articles_list_v2.html",
-        {"request": request, **data}
+        get_template_context(request, db, **data)
     )
 
 
 @router.get("/v2/articles/category/{category_slug}", response_class=HTMLResponse, name="web_v2_articles_category")
-async def articles_category_page(request: Request, category_slug: str):
+async def articles_category_page(request: Request, category_slug: str, db: Session = Depends(get_db)):
     article_service = ArticleService()
     data = article_service.get_category_articles(category_slug)
     if not data:
         return RedirectResponse(url="/v2/articles", status_code=303)
     return templates.TemplateResponse(
         "pages/articles_category_v2.html",
-        {"request": request, **data}
+        get_template_context(request, db, **data)
     )
 
 
 @router.get("/v2/articles/{article_slug}", response_class=HTMLResponse, name="web_v2_article_detail")
-async def article_detail_page(request: Request, article_slug: str):
+async def article_detail_page(request: Request, article_slug: str, db: Session = Depends(get_db)):
     article_service = ArticleService()
     data = article_service.get_article_detail(article_slug)
     if not data:
         return RedirectResponse(url="/v2/articles", status_code=303)
     return templates.TemplateResponse(
         "pages/article_detail_v2.html",
-        {"request": request, **data}
+        get_template_context(request, db, **data)
     )
 
 
 @router.get("/v2/search", response_class=HTMLResponse, name="web_v2_search")
-async def search_page(request: Request, q: str | None = None):
+async def search_page(request: Request, q: str | None = None, db: Session = Depends(get_db)):
     article_service = ArticleService()
     article_results = article_service.search_articles(q) if q else []
     law_results = search_laws(q) if q else []
+    data = {"query": q, "article_results": article_results, "law_results": law_results}
     return templates.TemplateResponse(
         "pages/search_v2.html",
-        {"request": request, "query": q, "article_results": article_results, "law_results": law_results}
+        get_template_context(request, db, **data)
+        #{"request": request, "query": q, "article_results": article_results, "law_results": law_results}
     )
 
 
