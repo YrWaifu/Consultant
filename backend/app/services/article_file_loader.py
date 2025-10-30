@@ -108,12 +108,10 @@ class ArticleFileLoader:
 
         # Обрабатываем Markdown файлы
         for md_file in directory.glob("*.md"):
-            print(md_file)
             try:
                 article_data = self._parse_markdown_file(md_file)
                 if not article_data:
                     continue
-                print('continue')
                 
                 # Определяем категорию по имени файла или содержимому
                 category_slug = article_data.get('category', 'ad-check-knowledge')
@@ -123,7 +121,6 @@ class ArticleFileLoader:
                 # Создаем статью
                 article_data['category_id'] = category.id
                 del article_data['category']  # Удаляем поле category
-                print('Data: ', article_data.keys())
                 article = self.repository.create_article(**article_data)
 
                 result["articles_created"] += 1
