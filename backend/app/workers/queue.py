@@ -8,7 +8,7 @@ redis = Redis.from_url(settings.REDIS_URL)
 queue = Queue("checks", connection=redis)
 
 # Фоновая задача для обработки ML модели
-def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_content_type: str | None):
+def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_content_type: str | None, check_id: str | None = None):
     """
     Фоновая задача для обработки проверки рекламы через ML модель.
     Выполняется в отдельном процессе воркера.
@@ -151,10 +151,41 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
             "check_date_short": check_date_short,    # Короткая версия для статуса
             "law_name": law_name,
             "law_version_date": law_version_date.isoformat() if hasattr(law_version_date, 'isoformat') else str(law_version_date),
+            "input_text": text,  # Исходный текст рекламы
         }
         
         print("🎉 Отчет сформирован успешно!")
         print(f"🔍 Типы данных в результате: {[(k, type(v).__name__) for k, v in result.items()]}")
+
+        # Сохраняем результат в БД если передан check_id
+        if check_id:
+            try:
+                from ..repositories.check_repository import CheckRepository
+                db = SessionLocal()
+                check_repo = CheckRepository(db)
+
+                # Формируем краткую сводку
+                violations_count = len(result.get('violations', []))
+                if result['is_ok']:
+                    summary = "✅ Соответствует законодательству"
+                elif violations_count > 3:
+                    summary = f"⚠️ Обнаружено {violations_count} нарушений"
+                else:
+                    summary = f"⚠️ Обнаружено {violations_count} предупреждение(й)"
+
+                # Сохраняем результат
+                check_repo.update_result(
+                    check_id=check_id,
+                    summary=summary,
+                    result=result,
+                    status="done"
+                )
+                print(f"💾 Результат сохранен в БД (check_id={check_id})")
+                db.close()
+            except Exception as save_error:
+                print(f"⚠️ Ошибка при сохранении в БД: {save_error}")
+                # Не пробрасываем ошибку дальше, т.к. результат все равно вернется
+
         return result
         
     except Exception as e:
