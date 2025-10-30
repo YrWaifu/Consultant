@@ -94,7 +94,7 @@ class ArticleRepository:
         return category
 
     def create_article(self, category_id: int, title: str, slug: str,
-                       content: str, excerpt: str = None, author: str = None,
+                       content: str, excerpt: str = None,
                        sort_order: int = 0, created_at: datetime = datetime.utcnow()) -> Article:
         """Создать новую статью"""
         article = Article(
@@ -103,7 +103,6 @@ class ArticleRepository:
             slug=slug,
             content=content,
             excerpt=excerpt,
-            author=author,
             created_at=created_at,
             sort_order=sort_order
         )
