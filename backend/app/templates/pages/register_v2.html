@@ -32,7 +32,7 @@
                     id="email" 
                     name="email" 
                     required
-                    class="w-full rounded-lg border border-neutral-300 bg-white px-4 py-2.5 outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400 invalid:border-red-500"
+                    class="w-full rounded-lg border border-neutral-300 bg-white px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-300 focus:border-cyan-400 invalid:border-red-500"
                     placeholder="your@email.com"
                     oninvalid="this.setCustomValidity('Введите корректный email адрес (например: name@example.com)')"
                     oninput="this.setCustomValidity('')"
@@ -50,7 +50,7 @@
                     name="password" 
                     required
                     minlength="6"
-                    class="w-full rounded-lg border border-neutral-300 bg-white px-4 py-2.5 outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400"
+                    class="w-full rounded-lg border border-neutral-300 bg-white px-4 py-2.5 outline-none focus:ring-2 focus:ring-cyan-300 focus:border-cyan-400"
                     placeholder="Минимум 6 символов"
                     oninvalid="this.setCustomValidity('Пароль должен быть минимум 6 символов')"
                     oninput="this.setCustomValidity('')"
@@ -65,7 +65,7 @@
             <!-- Кнопка регистрации -->
             <button 
                 type="submit"
-                class="w-full rounded-full bg-rose-600 px-6 py-3 text-white font-medium hover:bg-rose-700 transition"
+                class="w-full rounded-full bg-cyan-600 px-6 py-3 text-white font-medium hover:bg-cyan-700 transition"
             >
                 Зарегистрироваться
             </button>
@@ -74,7 +74,7 @@
         <!-- Ссылка на вход -->
         <div class="mt-6 text-center text-sm text-neutral-600">
             Уже есть аккаунт?
-            <a href="{{ url_for('web_v2_login') }}" class="text-rose-600 hover:text-rose-700 font-medium">
+            <a href="{{ url_for('web_v2_login') }}" class="text-blue-600 hover:text-blue-950 font-medium">
                 Войти
             </a>
         </div>

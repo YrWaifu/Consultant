@@ -7,7 +7,7 @@
     
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <!-- Загрузка из JSON -->
-        <div class="bg-white rounded-xl border border-rose-200 p-6">
+        <div class="bg-white rounded-xl border border-cyan-200 p-6">
             <h2 class="text-lg font-semibold mb-4">📄 Загрузка из JSON файла</h2>
             <p class="text-neutral-600 mb-4">
                 Загрузите JSON файл с категориями и статьями в формате, указанном в документации.
@@ -16,10 +16,10 @@
             <form id="json-upload-form" enctype="multipart/form-data">
                 <div class="mb-4">
                     <input type="file" id="json-file" name="file" accept=".json" 
-                           class="block w-full text-sm text-neutral-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100">
+                           class="block w-full text-sm text-neutral-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-blue-950 hover:file:bg-cyan-100">
                 </div>
                 <button type="submit" 
-                        class="w-full bg-rose-600 text-white py-2 px-4 rounded-lg hover:bg-rose-700 transition-colors">
+                        class="w-full bg-cyan-600 text-white py-2 px-4 rounded-lg hover:bg-cyan-700 transition-colors">
                     Загрузить статьи
                 </button>
             </form>
@@ -28,7 +28,7 @@
         </div>
         
         <!-- Создание примеров -->
-        <div class="bg-white rounded-xl border border-rose-200 p-6">
+        <div class="bg-white rounded-xl border border-cyan-200 p-6">
             <h2 class="text-lg font-semibold mb-4">🎯 Создать примеры статей</h2>
             <p class="text-neutral-600 mb-4">
                 Создать демонстрационные статьи для тестирования функциональности.
@@ -44,7 +44,7 @@
     </div>
     
     <!-- Загрузка из директории -->
-    <div class="mt-8 bg-white rounded-xl border border-rose-200 p-6">
+    <div class="mt-8 bg-white rounded-xl border border-cyan-200 p-6">
         <h2 class="text-lg font-semibold mb-4">📁 Загрузка из директории Markdown</h2>
         <p class="text-neutral-600 mb-4">
             Загрузите статьи из директории с Markdown файлами. Каждый файл должен содержать frontmatter с метаданными.
@@ -52,7 +52,7 @@
         
         <div class="flex gap-4">
             <input type="text" id="directory-path" placeholder="Путь к директории с .md файлами" 
-                   class="flex-1 px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500">
+                   class="flex-1 px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500">
             <button id="load-directory-btn" 
                     class="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
                 Загрузить из директории

@@ -9,7 +9,7 @@
 </a>
 
 <p class="text-sm text-neutral-600 mb-4">
-    Результаты проверки носят <span class="text-rose-600 font-medium">рекомендательный характер</span>
+    Результаты проверки носят <span class="text-blue-600 font-medium">рекомендательный характер</span>
 </p>
 
 <!-- Блок с исходным текстом рекламы -->
@@ -68,7 +68,7 @@
             {% elif f.type == 'warn' %}
             <span class="mt-1 text-amber-600">⚑</span>
             {% else %}
-            <span class="mt-1 text-rose-600">⚑</span>
+            <span class="mt-1 text-blue-600">⚑</span>
             {% endif %}
             <span class="{{ 'text-neutral-800' if f.strong else 'text-neutral-700' }}">{{ f.text }}</span>
         </li>
@@ -123,7 +123,7 @@
 <div class="text-center mt-6">
     {% if job_id %}
     <a href="{{ url_for('web_v2_check_result_pdf', job_id=job_id) }}"
-        class="inline-flex items-center justify-center rounded-full bg-rose-600 px-8 py-3 text-white text-lg hover:bg-rose-700">
+        class="inline-flex items-center justify-center rounded-full bg-cyan-400 px-8 py-3 text-white text-lg hover:bg-cyan-500">
         Скачать PDF-отчёт
     </a>
     {% else %}
@@ -135,6 +135,6 @@
 </div>
 
 <p class="text-center text-neutral-700 mt-4">
-    Отчёт сохранён в <a href="{{ url_for('web_v2_account_history') }}" class="text-rose-600 underline">Истории проверок</a>
+    Отчёт сохранён в <a href="{{ url_for('web_v2_account_history') }}" class="text-blue-600 underline">Истории проверок</a>
 </p>
 {% endblock %}

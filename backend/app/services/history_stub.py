@@ -26,8 +26,8 @@ def list_history(user_id: Optional[int] = None, db: Optional[Session] = None) ->
             badge_class = "bg-emerald-100 text-emerald-700"
         else:
             # Любое количество нарушений (даже 1) = с нарушениями
-            badge_text = "Нарушения"
-            badge_class = "bg-rose-100 text-rose-700"
+            badge_text = "Есть нарушения"
+            badge_class = "bg-rose-100 text-rose-950"
         
         result.append({
             "id": check.id,

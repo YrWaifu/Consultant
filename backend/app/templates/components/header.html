@@ -4,7 +4,7 @@
         <div class="flex items-center justify-between gap-4 py-3">
             <!-- Лого -->
             <a href="{{ url_for('web_v2_articles') }}" class="flex items-center gap-2 shrink-0">
-                <div class="h-10 w-10 rounded-full bg-rose-600 flex items-center justify-center text-white text-lg">📣
+                <div class="h-10 w-10 rounded-full bg-cyan-400 flex items-center justify-center text-white text-lg">📃
                 </div>
                 <span class="hidden sm:block font-semibold">РекВизор</span>
             </a>
@@ -20,7 +20,7 @@
                     <!-- Меню авторизованного пользователя -->
                     <div class="relative group">
                         <a href="{{ url_for('web_v2_account_subscription') }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-neutral-100 cursor-pointer">
-                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-rose-600 text-white text-sm font-medium">
+                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-cyan-400 text-white text-sm font-medium">
                                 {{ current_user.email[0].upper() }}
                             </span>
                             <span class="hidden sm:block text-sm font-medium">{{ current_user.email }}</span>
@@ -51,7 +51,7 @@
                         <a href="{{ url_for('web_v2_login') }}" class="px-4 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900">
                             Войти
                         </a>
-                        <a href="{{ url_for('web_v2_register') }}" class="px-4 py-2 text-sm font-medium bg-rose-600 text-white rounded-full hover:bg-rose-700">
+                        <a href="{{ url_for('web_v2_register') }}" class="px-4 py-2 text-sm font-medium bg-cyan-600 text-white rounded-full hover:bg-cyan-700">
                             Регистрация
                         </a>
                     </div>
@@ -67,19 +67,19 @@
         <ul class="flex items-center justify-center h-12 gap-8 text-sm">
             <li>
                 <a href="{{ url_for('web_v2_articles') }}"
-                    class="inline-flex items-center h-full border-b-2 {{ 'border-rose-500 text-rose-600' if active=='articles' else 'border-transparent text-neutral-700 hover:text-neutral-900' }}">
+                    class="inline-flex items-center h-full border-b-2 {{ 'border-cyan-500 text-cyan-600' if active=='articles' else 'border-transparent text-neutral-700 hover:text-neutral-900' }}">
                     Полезные статьи
                 </a>
             </li>
             <li>
                 <a href="{{ url_for('web_v2_check') }}"
-                    class="inline-flex items-center h-full border-b-2 {{ 'border-rose-500 text-rose-600' if active=='check' else 'border-transparent text-neutral-700 hover:text-neutral-900' }}">
+                    class="inline-flex items-center h-full border-b-2 {{ 'border-cyan-500 text-cyan-600' if active=='check' else 'border-transparent text-neutral-700 hover:text-neutral-900' }}">
                     Проверка рекламы
                 </a>
             </li>
             <li>
                 <a href="{{ url_for('web_v2_laws') }}"
-                    class="inline-flex items-center h-full border-b-2 {{ 'border-rose-500 text-rose-600' if active=='laws' else 'border-transparent text-neutral-700 hover:text-neutral-900' }}">
+                    class="inline-flex items-center h-full border-b-2 {{ 'border-cyan-500 text-cyan-600' if active=='laws' else 'border-transparent text-neutral-700 hover:text-neutral-900' }}">
                     ФЗ «О рекламе»
                 </a>
             </li>
