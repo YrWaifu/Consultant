@@ -1,11 +1,10 @@
 {# expects: tab ('profile'|'subscription'|'history'|'stats'), account dict #}
 <aside class="flex flex-col h-full min-h-[60vh] space-y-4">
     <div class="flex items-center gap-4">
-        <div class="w-14 h-14 rounded-full bg-neutral-300 overflow-hidden">
-            {% if account['avatar_url'] %}
-            <img src="{{ account['avatar_url'] }}" alt="avatar" class="w-full h-full object-cover" />
-            {% endif %}
-        </div>
+            <span class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-rose-600 text-white text-sm font-medium">
+                                {{ current_user.email[0].upper() }}
+                            </span>
+
         <div>
             <div class="font-medium">{{ account['email'] if account['role']=='user' else 'Гость' }}</div>
             <div class="text-sm text-neutral-500">Персональный аккаунт</div>
