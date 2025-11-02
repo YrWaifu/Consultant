@@ -12,7 +12,7 @@
             <h2 class="text-xl font-semibold text-neutral-900">{{ block.category.name }}</h2>
             {% if block.articles|length > 2 %}
             <a href="{{ url_for('web_v2_articles_category', category_slug=block.category.slug) }}" 
-               class="ml-auto text-rose-600 hover:text-rose-700 font-medium">
+               class="ml-auto text-cyan-700 hover:text-cyan-500 font-medium">
                 Все статьи →
             </a>
             {% endif %}
@@ -21,13 +21,13 @@
         <!-- Сетка статей -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {% for article in block.articles %}
-            <article class="rounded-xl border border-rose-300/70 bg-white p-4 shadow-[0_0_0_1px_rgba(244,63,94,0.05)] hover:shadow-md transition-shadow">
+            <article class="rounded-xl border border-cyan-500/70 bg-white p-4 shadow-[0_0_0_1px_rgba(244,63,94,0.05)] hover:shadow-md transition-shadow">
                 <div class="text-xs text-neutral-500 mb-2">
                     {{format_date(article.created_at, format='d MMMM yyyy', locale='ru')}}
                 </div>
                 <h3 class="font-semibold leading-snug mb-2">
                     <a href="{{ url_for('web_v2_article_detail', article_slug=article.slug) }}" 
-                       class="hover:text-rose-700 text-neutral-900">
+                       class="hover:text-cyan-500 text-neutral-900">
                         {{ article.title }}
                     </a>
                 </h3>
@@ -38,7 +38,7 @@
                 {% endif %}
                 <div class="text-right">
                     <a href="{{ url_for('web_v2_article_detail', article_slug=article.slug) }}" 
-                       class="text-sm text-rose-600 hover:text-rose-700 font-medium">
+                       class="text-sm text-cyan-700 hover:text-cyan-500 font-medium">
                         Читать полностью →
                     </a>
                 </div>
@@ -55,7 +55,7 @@
         Наши эксперты регулярно публикуют актуальные материалы по рекламному праву
     </p>
     <a href="{{ url_for('web_v2_check') }}" 
-       class="inline-flex items-center gap-2 bg-rose-600 text-white px-6 py-3 rounded-lg hover:bg-rose-700 transition-colors">
+       class="inline-flex items-center gap-2 bg-cyan-400 text-white px-6 py-3 rounded-full hover:bg-cyan-500 transition-colors">
         Проверить рекламу
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>

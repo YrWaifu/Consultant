@@ -12,7 +12,7 @@
 <!-- Результаты по статьям -->
 {% if article_results|length %}
 <section class="mb-10">
-    <h2 class="text-xl font-semibold mb-4 text-rose-700">📄 Статьи ({{ article_results|length }})</h2>
+    <h2 class="text-xl font-semibold mb-4 text-blue-950">📄 Статьи ({{ article_results|length }})</h2>
     <div class="space-y-4">
         {% for article in article_results %}
         {% include "components/article_card.html" %}
@@ -24,13 +24,13 @@
 <!-- Результаты по законам -->
 {% if law_results|length %}
 <section class="mb-10">
-    <h2 class="text-xl font-semibold mb-4 text-rose-700">⚖️ ФЗ «О рекламе» ({{ law_results|length }})</h2>
+    <h2 class="text-xl font-semibold mb-4 text-blue-950">⚖️ ФЗ «О рекламе» ({{ law_results|length }})</h2>
     <div class="space-y-3">
         {% for law in law_results %}
-        <article class="rounded-xl border border-rose-300/70 bg-white px-4 py-3 sm:px-5 sm:py-4">
+        <article class="rounded-xl border border-cyan-300/70 bg-white px-4 py-3 sm:px-5 sm:py-4">
             <div class="text-xs text-neutral-500 mb-1">{{ law.chapter }}</div>
             <h3 class="font-semibold leading-snug">
-                <a href="{{ url_for('web_v2_law_article', article_id=law.id) }}?highlight={{ query }}" class="hover:text-rose-700">
+                <a href="{{ url_for('web_v2_law_article', article_id=law.id) }}?highlight={{ query }}" class="hover:text-blue-950">
                     {{ law.title }}
                 </a>
             </h3>

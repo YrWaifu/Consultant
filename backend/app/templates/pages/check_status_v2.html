@@ -18,7 +18,7 @@
     <!-- Прогресс-бар -->
     <div class="mb-8">
         <div class="w-full bg-neutral-200 rounded-full h-2 mb-4">
-            <div id="progressBar" class="bg-rose-600 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+            <div id="progressBar" class="bg-cyan-400 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
         </div>
         <p id="statusText" class="text-sm text-neutral-500">
             Подготовка к анализу...
@@ -30,24 +30,24 @@
         <h3 class="font-semibold mb-4 text-neutral-800">Что происходит сейчас:</h3>
         <div class="space-y-3 text-left">
             <div id="step1" class="flex items-center gap-3">
-                <div class="w-6 h-6 rounded-full bg-rose-600 flex items-center justify-center text-white text-sm">1</div>
+                <div class="w-6 h-6 rounded-full bg-cyan-400 flex items-center justify-center text-white text-sm">1</div>
                 <span class="text-neutral-700">Анализ текста рекламы с помощью ИИ</span>
                 <div id="spinner1" class="ml-auto">
-                    <div class="animate-spin h-4 w-4 border-2 border-rose-600 border-t-transparent rounded-full"></div>
+                    <div class="animate-spin h-4 w-4 border-2 border-cyan-400 border-t-transparent rounded-full"></div>
                 </div>
             </div>
             <div id="step2" class="flex items-center gap-3 opacity-50">
                 <div class="w-6 h-6 rounded-full bg-neutral-300 flex items-center justify-center text-white text-sm">2</div>
                 <span class="text-neutral-700">Сопоставление с нормами закона</span>
                 <div id="spinner2" class="ml-auto hidden">
-                    <div class="animate-spin h-4 w-4 border-2 border-rose-600 border-t-transparent rounded-full"></div>
+                    <div class="animate-spin h-4 w-4 border-2 border-cyan-400 border-t-transparent rounded-full"></div>
                 </div>
             </div>
             <div id="step3" class="flex items-center gap-3 opacity-50">
                 <div class="w-6 h-6 rounded-full bg-neutral-300 flex items-center justify-center text-white text-sm">3</div>
                 <span class="text-neutral-700">Формирование отчета</span>
                 <div id="spinner3" class="ml-auto hidden">
-                    <div class="animate-spin h-4 w-4 border-2 border-rose-600 border-t-transparent rounded-full"></div>
+                    <div class="animate-spin h-4 w-4 border-2 border-cyan-400 border-t-transparent rounded-full"></div>
                 </div>
             </div>
         </div>
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentStep = 2;
             // Активируем шаг 2
             document.getElementById('step2').classList.remove('opacity-50');
-            document.getElementById('step2').querySelector('.bg-neutral-300').classList.add('bg-rose-600');
+            document.getElementById('step2').querySelector('.bg-neutral-300').classList.add('bg-cyan-400');
             document.getElementById('step2').querySelector('.bg-neutral-300').classList.remove('bg-neutral-300');
             document.getElementById('spinner2').classList.remove('hidden');
             document.getElementById('spinner1').style.display = 'none';
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentStep = 3;
             // Активируем шаг 3
             document.getElementById('step3').classList.remove('opacity-50');
-            document.getElementById('step3').querySelector('.bg-neutral-300').classList.add('bg-rose-600');
+            document.getElementById('step3').querySelector('.bg-neutral-300').classList.add('bg-cyan-400');
             document.getElementById('step3').querySelector('.bg-neutral-300').classList.remove('bg-neutral-300');
             document.getElementById('spinner3').classList.remove('hidden');
             document.getElementById('spinner2').style.display = 'none';
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (data.status === 'failed') {
                 statusText.textContent = 'Ошибка: ML модель недоступна или неправильно настроена';
                 progressBar.style.width = '100%';
-                progressBar.classList.remove('bg-rose-600');
+                progressBar.classList.remove('bg-cyan-600');
                 progressBar.classList.add('bg-red-600');
                 
                 // Убираем спиннеры
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (data.status === 'error') {
                 statusText.textContent = `Ошибка системы: ${data.error}`;
                 progressBar.style.width = '100%';
-                progressBar.classList.remove('bg-rose-600');
+                progressBar.classList.remove('bg-cyan-600');
                 progressBar.classList.add('bg-red-600');
                 
                 // Убираем спиннеры

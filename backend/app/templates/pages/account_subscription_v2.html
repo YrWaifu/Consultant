@@ -32,7 +32,7 @@
 
                 <form method="post" action="{{ url_for('web_v2_subscribe_start') }}" class="mt-6">
                     <button
-                        class="inline-flex items-center px-5 py-2.5 rounded-xl bg-rose-500 text-white hover:bg-rose-600">
+                        class="inline-flex items-center px-5 py-2.5 rounded-xl bg-cyan-500 text-white hover:bg-cyan-600">
                         Оформить
                     </button>
                 </form>
@@ -54,22 +54,22 @@
                 
                 {# Специальное предложение для trial пользователей #}
                 {% if sub.plan_code == "trial" %}
-                <div class="mt-6 bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-200 rounded-xl p-6">
+                <div class="mt-6 bg-gradient-to-r from-cyan-50 to-pink-50 border border-cyan-200 rounded-xl p-6">
                     <div class="flex items-start gap-4">
                         <div class="text-3xl">🚀</div>
                         <div class="flex-1">
-                            <h3 class="font-semibold text-rose-900 text-lg mb-2">Получите полный доступ!</h3>
-                            <p class="text-sm text-rose-800 mb-4">
+                            <h3 class="font-semibold text-blue-900 text-lg mb-2">Получите полный доступ!</h3>
+                            <p class="text-sm text-blue-800 mb-4">
                                 Не дожидайтесь окончания пробного периода! Оформите подписку <strong>Pro</strong> прямо сейчас:
                             </p>
-                            <ul class="text-sm text-rose-800 mb-4 space-y-1">
+                            <ul class="text-sm text-blue-800 mb-4 space-y-1">
                                 <li>✓ <strong>20 проверок</strong> в неделю (вместо 5 за весь период)</li>
                                 <li>✓ Недельный сброс счетчика проверок</li>
                                 <li>✓ Полный доступ к истории и статистике</li>
                             </ul>
                             <div class="flex items-center gap-3">
                                 <form method="post" action="{{ url_for('web_v2_upgrade_to_pro') }}">
-                                    <button type="submit" class="px-6 py-3 rounded-lg bg-rose-600 text-white hover:bg-rose-700 font-semibold shadow-sm">
+                                    <button type="submit" class="px-6 py-3 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 font-semibold shadow-sm">
                                         Перейти на Pro — 990 ₽/мес
                                     </button>
                                 </form>

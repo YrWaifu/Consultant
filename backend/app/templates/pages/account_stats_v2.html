@@ -19,7 +19,7 @@
                     <h3 class="text-xl font-semibold mb-2">Требуется активная подписка</h3>
                     <p class="text-neutral-600 mb-6">Для просмотра статистики необходима активная подписка.</p>
                     <a href="{{ url_for('web_v2_account_subscription') }}" 
-                       class="inline-block px-6 py-2 rounded-full bg-rose-600 text-white hover:bg-rose-700">
+                       class="inline-block px-6 py-2 rounded-full bg-cyan-600 text-white hover:bg-cyan-700">
                         Управление подпиской
                     </a>
                 </div>
@@ -45,7 +45,7 @@
                         {% set max_value = stats.last30|max %}
                         {% if max_value > 0 %}
                             {% for count in stats.last30 %}
-                            <div class="flex-1 bg-rose-400 rounded-sm transition-all hover:bg-rose-500" 
+                            <div class="flex-1 bg-cyan-400 rounded-sm transition-all hover:bg-cyan-500"
                                  style="height: {{ (count / max_value * 100)|round }}%"
                                  title="{{ count }} проверок">
                             </div>
