@@ -147,6 +147,14 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
         check_date_str = check_date.strftime('%d.%m.%Y в %H:%M')
         check_date_short = check_date.strftime('%d.%m.%Y')
         
+        # Получаем текст для отображения: либо исходный текст, либо распознанный из аудио
+        display_text = text
+        is_audio = False
+        if not text and audio_bytes:
+            # Если был загружен аудио файл, используем распознанный текст
+            display_text = ml_out.get("recognized_text")
+            is_audio = True
+        
         result = {
             "percent": percent,
             "ring_color": ring_color,
@@ -162,7 +170,8 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
             "check_date_short": check_date_short,    # Короткая версия для статуса
             "law_name": law_name,
             "law_version_date": law_version_date.isoformat() if hasattr(law_version_date, 'isoformat') else str(law_version_date),
-            "input_text": text,  # Исходный текст рекламы
+            "input_text": display_text,  # Исходный текст рекламы или распознанный из аудио
+            "is_audio": is_audio,  # Флаг, указывающий, что это аудио реклама
         }
         
         print("🎉 Отчет сформирован успешно!")

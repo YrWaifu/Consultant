@@ -25,10 +25,46 @@ from ..schemas import UserRegister, UserLogin
 from ..db import SessionLocal
 
 from babel.dates import format_date
+import re
 
 router = APIRouter()
 templates = Jinja2Templates(directory="backend/app/templates")
 templates.env.globals['format_date'] = format_date
+
+
+def link_law_articles(text: str, request_obj: Request) -> str:
+    """
+    Преобразует упоминания статей закона в тексте в ссылки.
+    Например: "п.1 ч.2 ст.5 ФЗ о рекламе" -> ссылка на статью закона
+    """
+    if not text:
+        return text
+    
+    # Паттерн для поиска упоминаний статей: п.X ч.Y ст.Z или ч.Y ст.Z или ст.Z
+    # Примеры: "п.1 ч.2 ст.5 ФЗ о рекламе", "ч.2 ст.5 ФЗ о рекламе", "ст.5 ФЗ о рекламе"
+    pattern = r'(п\.\d+(?:\.\d+)?\s+)?(ч\.\d+(?:\.\d+)?\s+)?(ст\.\d+(?:\.\d+)?)\s+ФЗ\s+о\s+рекламе'
+    
+    def replace_match(match):
+        article_ref = match.group(0)
+        # Извлекаем номер статьи (ст.X)
+        article_match = re.search(r'ст\.(\d+(?:\.\d+)?)', article_ref)
+        if article_match:
+            article_number = article_match.group(1)
+            article_id = f"art-{article_number}"
+            # Генерируем ссылку через request.url_for
+            try:
+                link_url = request_obj.url_for('web_v2_law_article', article_id=article_id)
+            except:
+                link_url = f"/v2/laws/article/{article_id}"
+            return f'<a href="{link_url}" class="text-blue-600 hover:text-blue-800 underline">{article_ref}</a>'
+        return article_ref
+    
+    result = re.sub(pattern, replace_match, text)
+    return result
+
+
+# Регистрируем фильтр
+templates.env.filters['link_law_articles'] = link_law_articles
 
 
 # Dependency для получения сессии БД
