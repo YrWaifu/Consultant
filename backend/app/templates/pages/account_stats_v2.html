@@ -56,9 +56,17 @@
                             </div>
                         {% endif %}
                     </div>
-                    <div class="mt-2 flex justify-between text-xs text-neutral-500">
-                        <span>30 дней назад</span>
-                        <span>Сегодня</span>
+                    <div class="mt-2 flex gap-1 text-xs text-neutral-500">
+                        {% if stats.last30_dates %}
+                            {% for date_str in stats.last30_dates %}
+                            <div class="flex-1 text-center" style="font-size: 0.65rem;">
+                                {{ date_str }}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="flex-1 text-left">30 дней назад</div>
+                            <div class="flex-1 text-right">Сегодня</div>
+                        {% endif %}
                     </div>
                 </div>
                 {% endif %}

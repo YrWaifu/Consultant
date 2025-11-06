@@ -68,20 +68,31 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
             for article, info in item.items():
                 law_article_id = "art-5"
                 formatted_title = format_violation_title(str(article))
+                
+                # Собираем случаи для этого нарушения
+                violation_cases = []
+                jp = info.get("judicial_proceedings") or {}
+                for case_title, case_text in jp.items():
+                    violation_cases.append({
+                        "title": case_title,
+                        "text": case_text,
+                        "fix": info.get("recommendations") or "",
+                    })
+                    # Также добавляем в общий список для обратной совместимости
+                    cases.append({
+                        "title": case_title,
+                        "text": case_text,
+                        "fix": info.get("recommendations") or "",
+                    })
+                
                 violations.append({
                     "severity": "critical",
                     "title": formatted_title,
                     "text": info.get("text") or "",
                     "fix": info.get("recommendations") or "",
                     "link": f"/v2/laws/article/{law_article_id}",
+                    "cases": violation_cases,  # Добавляем случаи в нарушение
                 })
-                jp = info.get("judicial_proceedings") or {}
-                for case_title, case_text in jp.items():
-                    cases.append({
-                        "title": case_title,
-                        "text": case_text,
-                        "fix": info.get("recommendations") or "",
-                    })
 
         print(f"📊 Найдено нарушений: {len(violations)}, кейсов: {len(cases)}")
 
