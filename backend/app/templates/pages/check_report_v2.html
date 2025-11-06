@@ -80,6 +80,7 @@
 <h2 class="text-xl font-semibold mt-10 mb-4">Выявленные нарушения из Федерального закона «О рекламе»</h2>
 <div class="space-y-5">
     {% for v in violations %}
+    {% set violation_index = loop.index0 %}
     {% include 'components/violation_card.html' %}
     {% endfor %}
 </div>
@@ -94,7 +95,8 @@
 </div>
 {% endif %} -->
 
-{% if cases|length %}
+{# Отдельный блок с случаями оставлен только для обратной совместимости, если есть случаи без нарушений #}
+{% if cases|length and not violations|length %}
 <h2 class="text-xl font-semibold mt-10 mb-4">Похожие случаи из судебной практики</h2>
 <div class="space-y-5">
     {% for c in cases %}
