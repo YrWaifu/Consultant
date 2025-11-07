@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>РекВизор — Проверка рекламы</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <link href="{{ url_for('static', path='css/build.css') }}" rel="stylesheet">
+</head>
+
+<body class="bg-white text-neutral-900">
+    <div class="min-h-screen flex flex-col">
+        <!-- Верхняя строка -->
+        <header class="px-6 sm:px-12 py-6 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-full bg-cyan-400 flex items-center justify-center text-white text-lg">📃
+                </div>
+                <span class="hidden sm:block font-semibold">РекВизор</span>
+            </a>
+            <a href="{{ url_for('web_v2_register') }}" class="inline-flex items-center justify-center rounded-full bg-cyan-500 px-6 py-3 text-white text-sm font-medium shadow-sm hover:bg-cyan-600 transition">
+                Начать пользоваться
+            </a>
+        </header>
+
+        <main class="flex-1">
+            <!-- Блок с ключевыми функциями сайта -->
+            <section class="px-6 sm:px-12">
+                <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+                    <div class="space-y-6">
+                        <h1 class="text-3xl sm:text-4xl font-bold leading-tight">
+                            Проверка рекламы на соответствие Федеральному закону «О рекламе» всего за
+                            <span class="text-cyan-500">30 секунд</span>
+                        </h1>
+                        <ul class="space-y-3 text-base text-neutral-700">
+                            <li class="flex items-start gap-3">
+                                <span class="mt-1 inline-block h-2.5 w-2.5 rounded-full bg-cyan-500"></span>
+                                <span>Анализ текста и аудио</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="mt-1 inline-block h-2.5 w-2.5 rounded-full bg-cyan-500"></span>
+                                <span>Выявление ключевых рисков нарушения закона</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="mt-1 inline-block h-2.5 w-2.5 rounded-full bg-cyan-500"></span>
+                                <span>Рекомендации по исправлению от ИИ</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="mt-1 inline-block h-2.5 w-2.5 rounded-full bg-cyan-500"></span>
+                                <span>Подбор релевантной судебной практики</span>
+                            </li>
+                        </ul>
+                        <div class="flex flex-wrap gap-4">
+                            <a href="{{ url_for('web_landing_example_report') }}" class="inline-flex items-center justify-center rounded-full border border-cyan-500 px-6 py-3 text-sm font-medium text-cyan-600 hover:bg-cyan-50 transition">
+                                Скачать пример отчёта
+                            </a>
+                            <a href="{{ url_for('web_v2_register') }}" class="inline-flex items-center justify-center rounded-full bg-cyan-500 px-6 py-3 text-sm font-medium text-white shadow hover:bg-cyan-600 transition">
+                                Зарегистрироваться
+                            </a>
+                        </div>
+                        <p class="text-sm text-neutral-500">
+                            <i>Бесплатный пробный период включает 5 проверок</i>
+                        </p>
+                    </div>
+                        <div class="translate-x-20 transition-transform duration-300 rounded-4xl border border-sky-100 shadow-xl overflow-visible transform scale-[1.25] transition-transform duration-300">
+                          <img src="{{ url_for('web_landing_asset', filename='example.png') }}"
+                               alt="Пример проверки"
+                               class="w-full h-auto">
+                        </div>
+                </div>
+            </section>
+
+            <!-- Блок о преимуществах -->
+            <section class="px-6 sm:px-12 mt-10 pb-[100px]">
+              <!-- Заголовок -->
+              <div class="max-w-6xl mx-auto mb-12">
+                <h2 class="text-4xl sm:text-3xl font-bold text-left">
+                  Почему <span class="text-cyan-500">РекВизор?</span>
+                </h2>
+              </div>
+
+            <!-- Блок с маскотом и карточками -->
+            <section class="relative flex justify-center items-center mt-32">
+                <div class="z-10">
+                  <img src="{{ url_for('web_landing_asset', filename='bot.png') }}"
+                       alt="РекВизор бот"
+                       class="w-52 sm:w-64">
+                </div>
+
+                <div class="absolute w-[750px] h-[600px] rounded-full flex justify-center items-center">
+                  <!-- карточки по кругу -->
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 transform p-[2px] rounded-2xl bg-transparent transition-all duration-300 hover:bg-gradient-to-b hover:from-cyan-200 hover:to-white hover:scale-105 hover:shadow-2xl">
+                      <div class="p-5 rounded-2xl bg-white shadow-md text-center transition-all duration-300" style="font-weight:600">
+                        <span class="text-cyan-500">Поиск</span> по ФЗ и материалам
+                      </div>
+                    </div>
+
+                    <div class="absolute top-[20%] right-0 transform p-[2px] translate-x-1/2 rounded-2xl bg-transparent transition-all duration-300 hover:bg-gradient-to-b hover:from-cyan-200 hover:to-white hover:scale-105 hover:shadow-2xl">
+                      <div class="p-5 rounded-2xl bg-white shadow-md text-center transition-all duration-300" style="font-weight:600">
+                          <span class="text-cyan-500">Прозрачная</span> методика проверки
+                      </div>
+                    </div>
+
+                    <div class="absolute bottom-[20%] right-0 transform p-[2px] translate-x-1/2 rounded-2xl bg-transparent transition-all duration-300 hover:bg-gradient-to-b hover:from-cyan-200 hover:to-white hover:scale-105 hover:shadow-2xl">
+                      <div class="p-5 rounded-2xl shadow-md bg-white shadow-md text-center transition-all duration-300" style="font-weight:600">
+                          Материалы, подготовленные <span class="text-cyan-500">юристами</span>
+                      </div>
+                    </div>
+
+                    <div class="absolute bottom-0 left-1/2 transform p-[2px] -translate-x-1/2 rounded-2xl bg-transparent transition-all duration-300 hover:bg-gradient-to-b hover:from-cyan-200 hover:to-white hover:scale-105 hover:shadow-2xl">
+                      <div class="p-5 rounded-2xl shadow-md bg-white shadow-md text-center transition-all duration-300" style="font-weight:600">
+                          Подробный <span class="text-cyan-500">отчёт</span> о проверке
+                      </div>
+                    </div>
+
+                    <div class="absolute bottom-[20%] left-0 transform p-[2px] -translate-x-1/2 rounded-2xl bg-transparent transition-all duration-300 hover:bg-gradient-to-b hover:from-cyan-200 hover:to-white hover:scale-105 hover:shadow-2xl">
+                      <div class="p-5 rounded-2xl shadow-md bg-white shadow-md text-center transition-all duration-300" style="font-weight:600">
+                          <span class="text-cyan-500">История</span> проверок
+                      </div>
+                    </div>
+
+                    <div class="absolute top-[20%] left-0 transform p-[2px] -translate-x-1/2 rounded-2xl bg-transparent transition-all duration-300 hover:bg-gradient-to-b hover:from-cyan-200 hover:to-white hover:scale-105 hover:shadow-2xl">
+                      <div class="p-5 rounded-2xl shadow-md bg-white shadow-md text-center transition-all duration-300" style="font-weight:600">
+                          <span class="text-cyan-500">Статистика</span>
+                      </div>
+                    </div>
+                </div>
+            </section>
+        </section>
+
+            <!-- Цены -->
+            <section class="px-6 sm:px-12 mt-20 mb-10">
+
+                <div class="max-w-6xl mx-auto mb-12">
+                    <h2 class="text-4xl sm:text-3xl font-bold text-left">Цены</h2>
+                </div>
+
+                <div class="mt-10 grid gap-12 md:grid-cols-3 max-w-5xl mx-auto">
+
+                    <a href="{{ url_for('web_v2_register') }}">
+                        <div class="relative rounded-3xl shadow-lg p-8 p-[2px] bg-transparent transition-all duration-300 hover:bg-gradient-to-b hover:from-cyan-200 hover:to-white hover:scale-105 hover:shadow-2xl">
+                          <div class="rounded-3xl bg-white p-8 text-center transition-all duration-300">
+                            <h3 class="text-lg font-semibold">Подписка</h3>
+                            <p class="mt-4 text-sm text-neutral-600">
+                              Месяц<br>20 проверок в неделю<br>Можно продлевать
+                            </p>
+                            <p class="mt-6 text-xl font-semibold text-cyan-500" style="font-style:italic">990₽</p>
+                          </div>
+                        </div>
+                    </a>
+
+                    <a href="{{ url_for('web_v2_register') }}">
+                        <div class="relative rounded-3xl shadow-2xl p-[2px] bg-gradient-to-b from-cyan-400 to-sky-200 scale-105 transition-all duration-500 hover:scale-110 hover:shadow-cyan-300">
+                          <div class="rounded-3xl bg-white p-8 text-center transition-all duration-300">
+                            <h3 class="text-lg font-semibold text-cyan-500" style="font-weight:700">Пробный период</h3>
+                            <p class="mt-4 text-sm text-neutral-600">
+                              7 дней<br>5 проверок в неделю<br>Доступен один раз
+                            </p>
+                            <p class="mt-6 text-xl font-semibold text-cyan-500" style="font-style:italic" >Бесплатно</p>
+                          </div>
+                        </div>
+                    </a>
+
+                    <div class="relative rounded-3xl shadow-lg p-8 p-[2px] bg-transparent transition-all duration-300 hover:bg-gradient-to-b hover:from-cyan-200 hover:to-white hover:scale-105 hover:shadow-2xl">
+                      <div class="rounded-3xl bg-white p-8 text-center transition-all duration-300">
+                        <h3 class="text-lg font-semibold">Доп. проверки</h3>
+                        <p class="mt-4 text-sm text-neutral-600">
+                          30 проверок<br>Не сгорают за месяц<br>Только при наличии подписки
+                        </p>
+                        <p class="mt-6 text-xl font-semibold text-cyan-500" style="font-style:italic">100₽</p>
+                      </div>
+                    </div>
+
+                </div>
+
+
+                <div class="mt-12 flex justify-center">
+                    <a href="{{ url_for('web_v2_register') }}" class="inline-flex items-center justify-center rounded-full bg-cyan-500 px-8 py-3 text-base font-medium text-white shadow hover:bg-cyan-600 transition">
+                        Зарегистрироваться
+                    </a>
+                </div>
+
+            </section>
+        </main>
+
+        <footer class="px-6 sm:px-12 py-8 bg-neutral-50 text-center text-neutral-500">
+            <div class="max-w-6xl mx-auto flex justify-center items-center">
+                <span>© 2025 РекВизор</span>
+            </div>
+        </footer>
+
+    </div>
+</body>
+
+</html>
+

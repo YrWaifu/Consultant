@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Request, Form, UploadFile, File, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse, Response, JSONResponse
+from fastapi import APIRouter, Request, Form, UploadFile, File, Depends, HTTPException
+from fastapi.responses import HTMLResponse, RedirectResponse, Response, JSONResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 import json
 import os
+from pathlib import Path
 
 from ..services.article_service import ArticleService
 from ..services.article_file_loader import ArticleFileLoader
@@ -30,6 +31,8 @@ import re
 router = APIRouter()
 templates = Jinja2Templates(directory="backend/app/templates")
 templates.env.globals['format_date'] = format_date
+
+LANDING_ASSETS_DIR = Path("backend/app/templates/landing_assets")
 
 
 def link_law_articles(text: str, request_obj: Request) -> str:
@@ -87,9 +90,37 @@ def get_template_context(request: Request, db: Session, **kwargs):
     }
 
 
-@router.get("/", name="web_root")
-async def index():
-    return RedirectResponse(url="/v2/articles", status_code=303)
+@router.get("/", response_class=HTMLResponse, name="web_root")
+async def landing_page(request: Request, db: Session = Depends(get_db)):
+    return templates.TemplateResponse(
+        "pages/landing.html",
+        get_template_context(request, db, active="landing")
+    )
+
+
+@router.get("/landing-assets/{filename}", name="web_landing_asset")
+async def landing_asset(filename: str):
+    safe_name = Path(filename).name
+    file_path = LANDING_ASSETS_DIR / safe_name
+
+    if not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Файл не найден")
+
+    return FileResponse(file_path)
+
+
+@router.get("/landing/example-report", name="web_landing_example_report")
+async def landing_example_report():
+    file_path = LANDING_ASSETS_DIR / "example_report.pdf"
+
+    if not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Файл не найден")
+
+    return FileResponse(
+        file_path,
+        media_type="application/pdf",
+        filename="example_report.pdf"
+    )
 
 
 @router.get("/v2/articles", response_class=HTMLResponse, name="web_v2_articles")
