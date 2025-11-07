@@ -90,11 +90,32 @@ def get_template_context(request: Request, db: Session, **kwargs):
     }
 
 
-@router.get("/", response_class=HTMLResponse, name="web_root")
-async def landing_page(request: Request, db: Session = Depends(get_db)):
+@router.get("/", name="web_root")
+async def index(request: Request):
+    # Проверяем, есть ли cookie "visited"
+    visited = request.cookies.get("visited")
+
+    if not visited:
+        # Если нет — перенаправляем на лендинг
+        response = RedirectResponse(url="/landing", status_code=303)
+        # Устанавливаем cookie, чтобы не редиректить повторно
+        response.set_cookie(
+            key="visited",
+            value="yes",
+            max_age=60*60*24*365,  # 1 год
+            httponly=True
+        )
+        return response
+
+    # Если уже был — отправляем на главную страницу
+    return RedirectResponse(url="/v2/check", status_code=303)
+
+
+@router.get("/landing", name="landing")
+async def landing(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse(
         "pages/landing.html",
-        get_template_context(request, db, active="landing")
+        get_template_context(request, db)
     )
 
 
