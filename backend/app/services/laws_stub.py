@@ -1,6 +1,7 @@
 from __future__ import annotations
 from ..db import SessionLocal
 from ..repositories.law_repository import LawRepository
+from .law_parser import fetch_law_name
 
 LAW_TITLE = 'Федеральный закон «О рекламе»'
 LAW_META = 'от 13.03.2006 N 38-ФЗ (последняя редакция)'
@@ -82,8 +83,11 @@ def get_law_index() -> dict:
             
             toc.append(chapter_toc)
         
+        # Получаем название закона с указанного URL
+        law_name = fetch_law_name()
+        
         return {
-            "title": law_version.law_name,
+            "title": law_name,
             "meta": "",  
             "toc": toc if toc else _TOC
         }
@@ -178,8 +182,11 @@ def get_article(article_id: str) -> dict:
         # Получаем TOC
         toc_data = get_law_index()
         
+        # Получаем название закона с указанного URL
+        law_name = fetch_law_name()
+        
         return {
-            "title": law_version.law_name,
+            "title": law_name,
             "meta": "",
             "article": {
                 "id": current_id,

@@ -19,11 +19,11 @@
             onclick="document.getElementById('originalTextContent').classList.toggle('hidden'); this.querySelector('.toggle-icon').classList.toggle('rotate-180')"
             class="w-full px-5 py-3 flex items-center justify-between text-left hover:bg-neutral-100 transition rounded-lg">
         <span class="font-medium text-neutral-900">{% if is_audio %}Распознанный текст из аудио{% else %}Исходный текст рекламы{% endif %}</span>
-        <svg class="toggle-icon w-5 h-5 text-neutral-600 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="toggle-icon w-5 h-5 text-neutral-600 transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
         </svg>
     </button>
-    <div id="originalTextContent" class="hidden px-5 pb-4 pt-2">
+    <div id="originalTextContent" class="px-5 pb-4 pt-2">
         <div class="bg-white rounded border border-neutral-200 p-4 text-neutral-800 whitespace-pre-wrap">{{ input_text }}</div>
     </div>
 </div>
