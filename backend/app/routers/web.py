@@ -565,7 +565,7 @@ async def register_page(request: Request, db: Session = Depends(get_db)):
     from ..settings import settings
     return templates.TemplateResponse(
         "pages/register_v2.html",
-        get_template_context(request, db, recaptcha_site_key=settings.RECAPTCHA_SITE_KEY)
+        get_template_context(request, db, recaptcha_site_key=settings.RECAPTCHA_SITE_KEY, hide_header=True)
     )
 
 
@@ -608,15 +608,16 @@ async def register_submit(
         user_data = UserRegister(email=email, password=password)
         user = register_user(db, user_data)
 
-        # Создаем response с редиректом
-        response = RedirectResponse(url="/v2/auth/login?registered=1", status_code=303)
+        # Автоматически логиним пользователя после регистрации
+        response = RedirectResponse(url="/", status_code=303)
+        set_auth_cookie(response, user.id)
 
         return response
     except Exception as e:
         # В случае ошибки возвращаемся на страницу регистрации с сообщением
         return templates.TemplateResponse(
             "pages/register_v2.html",
-            get_template_context(request, db, error=str(e), recaptcha_site_key=settings.RECAPTCHA_SITE_KEY),
+            get_template_context(request, db, error=str(e), recaptcha_site_key=settings.RECAPTCHA_SITE_KEY, hide_header=True),
             status_code=400
         )
 
@@ -627,7 +628,7 @@ async def login_page(request: Request, registered: int = 0, db: Session = Depend
     success_message = "Регистрация успешна! Теперь можете войти." if registered else None
     return templates.TemplateResponse(
         "pages/login_v2.html",
-        get_template_context(request, db, success_message=success_message)
+        get_template_context(request, db, success_message=success_message, hide_header=True)
     )
 
 
@@ -644,7 +645,7 @@ async def login_submit(
     if not user:
         return templates.TemplateResponse(
             "pages/login_v2.html",
-            get_template_context(request, db, error="Неверный email или пароль"),
+            get_template_context(request, db, error="Неверный email или пароль", hide_header=True),
             status_code=401
         )
 

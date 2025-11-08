@@ -70,25 +70,22 @@
             {% else %}
             <span class="mt-1 text-blue-600">⚑</span>
             {% endif %}
-            <span class="{{ 'text-neutral-800' if f.strong else 'text-neutral-700' }}">
+            <div class="flex-1">
+                <span class="{{ 'text-neutral-800' if f.strong else 'text-neutral-700' }}">
+                    {{ f.text }}
+                </span>
                 {% if 'Выявлено' in f.text and 'несоответств' in f.text %}
                     {% set violations_link = url_for('web_v2_article_detail', article_slug='perechen-narushenij') %}
-                    {% if 'несоответствие' in f.text %}
-                        {{ f.text|replace('несоответствие', '<a href="' ~ violations_link ~ '" class="text-blue-600 hover:text-blue-800 underline">несоответствие</a>')|safe }}
-                    {% elif 'несоответствия' in f.text %}
-                        {{ f.text|replace('несоответствия', '<a href="' ~ violations_link ~ '" class="text-blue-600 hover:text-blue-800 underline">несоответствия</a>')|safe }}
-                    {% elif 'несоответствий' in f.text %}
-                        {{ f.text|replace('несоответствий', '<a href="' ~ violations_link ~ '" class="text-blue-600 hover:text-blue-800 underline">несоответствий</a>')|safe }}
-                    {% else %}
-                        {{ f.text }}
-                    {% endif %}
-                {% elif 'ответственности' in f.text %}
+                    <div class="mt-1">
+                        <a href="{{ violations_link }}" class="text-blue-600 hover:text-blue-800 underline text-sm">Подробнее про несоответствия</a>
+                    </div>
+                {% elif 'существующей судебной практике' in f.text and 'ответственности' in f.text %}
                     {% set responsibility_link = url_for('web_v2_article_detail', article_slug='otvetstvennost-za-reklamu') %}
-                    {{ f.text|replace('ответственности', '<a href="' ~ responsibility_link ~ '" class="text-blue-600 hover:text-blue-800 underline">ответственности</a>')|safe }}
-                {% else %}
-                    {{ f.text }}
+                    <div class="mt-1">
+                        <a href="{{ responsibility_link }}" class="text-blue-600 hover:text-blue-800 underline text-sm">Подробнее про ответственность</a>
+                    </div>
                 {% endif %}
-            </span>
+            </div>
         </li>
         {% endfor %}
     </ul>
