@@ -91,23 +91,15 @@ def get_template_context(request: Request, db: Session, **kwargs):
 
 
 @router.get("/", name="web_root")
-async def index(request: Request):
-    # Проверяем, есть ли cookie "visited"
-    visited = request.cookies.get("visited")
+async def index(request: Request, db: Session = Depends(get_db)):
+    # Проверяем, залогинен ли пользователь
+    current_user = get_current_user_from_cookie(request, db)
 
-    if not visited:
-        # Если нет — перенаправляем на лендинг
-        response = RedirectResponse(url="/landing", status_code=303)
-        # Устанавливаем cookie, чтобы не редиректить повторно
-        response.set_cookie(
-            key="visited",
-            value="yes",
-            max_age=60*60*24*365,  # 1 год
-            httponly=True
-        )
-        return response
+    if not current_user:
+        # Если не залогинен — показываем лендинг
+        return RedirectResponse(url="/landing", status_code=303)
 
-    # Если уже был — отправляем на главную страницу
+    # Если залогинен — отправляем на страницу проверки
     return RedirectResponse(url="/v2/check", status_code=303)
 
 
