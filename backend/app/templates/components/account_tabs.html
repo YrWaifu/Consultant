@@ -26,8 +26,38 @@
         </a>
 
         {# Выход — такой же пункт, без прижатия вниз #}
-        <a href="{{ url_for('web_v2_logout') }}" class="block rounded-xl px-3 py-2 hover:bg-neutral-50 text-neutral-600">
+        <button type="button"
+                onclick="document.getElementById('logoutModal').classList.remove('hidden')"
+                class="block w-full text-left rounded-xl px-3 py-2 hover:bg-neutral-50 text-neutral-600">
             <span class="inline-flex items-center gap-2"><span>⏏️</span> Выход</span>
-        </a>
+        </button>
     </nav>
 </aside>
+
+{# Модальное окно подтверждения выхода #}
+<div id="logoutModal" 
+     class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+     onclick="if (event.target === this) this.classList.add('hidden')">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 transform transition-all" onclick="event.stopPropagation()">
+        <div class="p-6">
+            <div class="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-cyan-100">
+                <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-center text-neutral-900 mb-2">Выход из аккаунта</h3>
+            <p class="text-center text-neutral-600 mb-6">Точно хотите выйти из аккаунта?</p>
+            <div class="flex gap-3">
+                <button type="button"
+                        onclick="document.getElementById('logoutModal').classList.add('hidden')"
+                        class="flex-1 px-4 py-2.5 rounded-lg border border-neutral-300 text-neutral-700 font-medium hover:bg-neutral-50 transition">
+                    Отмена
+                </button>
+                <a href="{{ url_for('web_v2_logout') }}"
+                   class="flex-1 px-4 py-2.5 rounded-lg bg-cyan-400 text-white font-medium hover:bg-cyan-600 transition text-center">
+                    Выйти
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
