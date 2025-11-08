@@ -1,31 +1,23 @@
-<!doctype html>
-<html lang="ru">
+{% extends "layouts/base_v2.html" %}
+{% set active = "landing" %}
+{% block title %}О РекВизор — Проверка рекламы{% endblock %}
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>РекВизор — Проверка рекламы</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
-    <link href="{{ url_for('static', path='css/build.css') }}" rel="stylesheet">
-</head>
+{% block head %}
+<style>
+    body {
+        background-color: white !important;
+    }
+    main {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+</style>
+{% endblock %}
 
-<body class="bg-white text-neutral-900">
-    <div class="min-h-screen flex flex-col">
-        <!-- Верхняя строка -->
-        <header class="px-6 sm:px-12 py-6 flex items-center justify-between">
-            <a href="/" class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-full bg-cyan-400 flex items-center justify-center text-white text-lg">📃
-                </div>
-                <span class="hidden sm:block font-semibold">РекВизор</span>
-            </a>
-            <a href="{{ url_for('web_v2_register') }}" class="inline-flex items-center justify-center rounded-full bg-cyan-500 px-6 py-3 text-white text-sm font-medium shadow-sm hover:bg-cyan-600 transition">
-                Начать пользоваться
-            </a>
-        </header>
-
-        <main class="flex-1">
-            <!-- Блок с ключевыми функциями сайта -->
-            <section class="px-6 sm:px-12">
+{% block content %}
+<div class="bg-white">
+    <!-- Блок с ключевыми функциями сайта -->
+    <section class="px-6 sm:px-12 py-6">
                 <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
                     <div class="space-y-6">
                         <h1 class="text-3xl sm:text-4xl font-bold leading-tight">
@@ -181,16 +173,6 @@
                 </div>
 
             </section>
-        </main>
-
-        <footer class="px-6 sm:px-12 py-8 bg-neutral-50 text-center text-neutral-500">
-            <div class="max-w-6xl mx-auto flex justify-center items-center">
-                <span>© 2025 РекВизор</span>
-            </div>
-        </footer>
-
-    </div>
-</body>
-
-</html>
+</div>
+{% endblock %}
 
