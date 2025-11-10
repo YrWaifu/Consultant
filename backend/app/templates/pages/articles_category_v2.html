@@ -29,7 +29,19 @@
         <div class="flex items-start gap-4">
             <div class="flex-1">
                 <div class="text-sm text-neutral-500 mb-2">
-                    {{format_date(article.created_at, format='d MMMM yyyy', locale='ru')}}
+                    Опубликовано {{format_date(article.created_at, format='d MMMM yyyy', locale='ru')}} • Актуально на {{format_date(article.updated_at if article.updated_at else article.created_at, format='d MMMM yyyy', locale='ru')}}
+                    {% if article.view_count > 0 %}
+                    {% set last_digit = article.view_count % 10 %}
+                    {% set last_two_digits = article.view_count % 100 %}
+                    {% if last_digit == 1 and last_two_digits != 11 %}
+                        {% set views_word = 'просмотр' %}
+                    {% elif last_digit in [2, 3, 4] and last_two_digits not in [12, 13, 14] %}
+                        {% set views_word = 'просмотра' %}
+                    {% else %}
+                        {% set views_word = 'просмотров' %}
+                    {% endif %}
+                    • {{ article.view_count }} {{ views_word }}
+                    {% endif %}
                 </div>
                 <h2 class="text-lg font-semibold mb-2">
                     <a href="{{ url_for('web_v2_article_detail', article_slug=article.slug) }}" 
@@ -46,8 +58,17 @@
                         Читать полностью →
                     </a>
                     {% if article.view_count > 0 %}
+                    {% set last_digit = article.view_count % 10 %}
+                    {% set last_two_digits = article.view_count % 100 %}
+                    {% if last_digit == 1 and last_two_digits != 11 %}
+                        {% set views_word = 'просмотр' %}
+                    {% elif last_digit in [2, 3, 4] and last_two_digits not in [12, 13, 14] %}
+                        {% set views_word = 'просмотра' %}
+                    {% else %}
+                        {% set views_word = 'просмотров' %}
+                    {% endif %}
                     <span class="text-sm text-neutral-500">
-                        {{ article.view_count }} просмотров
+                        {{ article.view_count }} {{ views_word }}
                     </span>
                     {% endif %}
                 </div>

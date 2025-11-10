@@ -23,7 +23,7 @@
             {% for article in block.articles %}
             <article class="rounded-xl border border-cyan-500/70 bg-white p-4 shadow-[0_0_0_1px_rgba(244,63,94,0.05)] hover:shadow-md transition-shadow">
                 <div class="text-xs text-neutral-500 mb-2">
-                    {{format_date(article.created_at, format='d MMMM yyyy', locale='ru')}}
+                    Опубликовано {{format_date(article.created_at, format='d MMMM yyyy', locale='ru')}} • Актуально на {{format_date(article.updated_at if article.updated_at else article.created_at, format='d MMMM yyyy', locale='ru')}}
                 </div>
                 <h3 class="font-semibold leading-snug mb-2">
                     <a href="{{ url_for('web_v2_article_detail', article_slug=article.slug) }}" 
