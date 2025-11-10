@@ -23,6 +23,24 @@
     <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {% block content %}{% endblock %}
     </main>
+
+    <footer class="bg-neutral-50 border-t border-neutral-200 mt-12">
+        <div class="container mx-auto px-8 lg:px-10 py-4">
+            <div class="flex flex-wrap items-center justify-center gap-3 text-xs text-neutral-500">
+                <span class="font-medium text-neutral-600">{{ settings.SITE_NAME }}</span>
+                {% if settings.CONTACT_EMAIL %}
+                <span class="text-neutral-300">•</span>
+                <a href="mailto:{{ settings.CONTACT_EMAIL }}" class="hover:text-cyan-600 hover:underline transition-colors">
+                    {{ settings.CONTACT_EMAIL }}
+                </a>
+                {% endif %}
+                {% if settings.CONTACT_ADDRESS %}
+                <span class="text-neutral-300">•</span>
+                <span>{{ settings.CONTACT_ADDRESS }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </footer>
 </body>
 
 </html>

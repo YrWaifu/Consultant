@@ -24,6 +24,7 @@ from ..services.auth_service import (
 )
 from ..schemas import UserRegister, UserLogin
 from ..db import SessionLocal
+from ..settings import settings as app_settings
 
 from babel.dates import format_date
 import re
@@ -31,6 +32,7 @@ import re
 router = APIRouter()
 templates = Jinja2Templates(directory="backend/app/templates")
 templates.env.globals['format_date'] = format_date
+templates.env.globals['settings'] = app_settings
 
 LANDING_ASSETS_DIR = Path("backend/app/templates/landing_assets")
 
