@@ -18,6 +18,7 @@ from ..repositories.law_repository import LawRepository
 
 # Константы
 LAW_BASE_URL = "https://www.consultant.ru/document/cons_doc_LAW_58968/"
+LAW_NAME_URL = "https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=502629&dst=1000000001&cacheid=4FB90E0190495F8EA6306FE02560E6E3&mode=splus&rnd=Fkqfx1VCH2OzPk481#misfx1V6LzxmMZJm2"
 LAW_NAME = "Федеральный закон \"О рекламе\" от 13.03.2006 N 38-ФЗ (последняя редакция)"
 LAW_CODE = "38-FZ"
 
@@ -345,27 +346,80 @@ def save_to_database(structure: List[Dict], version_date: date, law_name: str = 
         db.close()
 
 
+def fetch_law_name() -> str:
+    """Получение названия закона с указанного URL"""
+    try:
+        # Пробуем получить HTML версию с дополнительными заголовками
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+        }
+        
+        resp = SESSION.get(LAW_NAME_URL, headers=headers, timeout=20)
+        resp.raise_for_status()
+        html = resp.text
+        
+        # Парсим как HTML (даже если это XML, BeautifulSoup может обработать)
+        soup = BeautifulSoup(html, "lxml")
+        
+        # Ищем название в теге <title> или в <meta property="og:title">
+        full_name = None
+        
+        # Пробуем найти в <meta property="og:title">
+        og_title = soup.find("meta", property="og:title")
+        if og_title and og_title.get("content"):
+            full_name = og_title.get("content")
+        
+        # Если не нашли, пробуем в <title>
+        if not full_name:
+            title_el = soup.find("title")
+            if title_el:
+                full_name = title_el.get_text(strip=True)
+        
+        if full_name:
+            # Убираем " - КонсультантПлюс" в конце, если есть
+            full_name = re.sub(r'\s*-\s*КонсультантПлюс\s*$', '', full_name, flags=re.IGNORECASE)
+            
+            # Обрезаем до скобки "(с изм. и доп., вступ. в силу с..."
+            match = re.search(r'^(.+?)\s*\(с\s+изм\.\s+и\s+доп\.', full_name)
+            if match:
+                result = match.group(1).strip()
+                print(f"✅ Название закона получено: {result}")
+                return result
+            # Если не нашли такую скобку, возвращаем как есть
+            print(f"✅ Название закона получено: {full_name}")
+            return full_name
+        
+        print(f"⚠️ Название закона не найдено в <title> или <meta property=\"og:title\">")
+        print(f"⚠️ Использую fallback название: {LAW_NAME}")
+        return LAW_NAME  # fallback
+    except Exception as e:
+        print(f"❌ Ошибка при получении названия закона с {LAW_NAME_URL}: {e}")
+        import traceback
+        traceback.print_exc()
+        print(f"⚠️ Использую fallback название: {LAW_NAME}")
+        return LAW_NAME  # fallback
+
+
 def extract_law_metadata(html: str) -> Dict:
     """Извлечение метаданных закона: название и дата из названия"""
     soup = BeautifulSoup(html, "lxml")
     
-    # Название закона
-    title_el = soup.select_one(".document-page__title h1")
-    law_name = LAW_NAME  # default
+    # Получаем название закона с указанного URL
+    law_name = fetch_law_name()
     law_date = date(2006, 3, 13)  # default
     
-    if title_el:
-        title_text = title_el.get_text(strip=True)
-        # Сохраняем полное название включая "(последняя редакция)"
-        law_name = title_text
-        
-        # Извлекаем дату из названия: "Федеральный закон "О рекламе" от 13.03.2006 N 38-ФЗ"
-        date_match = re.search(r'от\s+(\d{2}\.\d{2}\.\d{4})', title_text)
-        if date_match:
-            try:
-                law_date = datetime.strptime(date_match.group(1), '%d.%m.%Y').date()
-            except:
-                pass
+    # Извлекаем дату из названия: "Федеральный закон "О рекламе" от 13.03.2006 N 38-ФЗ"
+    date_match = re.search(r'от\s+(\d{2}\.\d{2}\.\d{4})', law_name)
+    if date_match:
+        try:
+            law_date = datetime.strptime(date_match.group(1), '%d.%m.%Y').date()
+        except:
+            pass
     
     return {
         "law_name": law_name,

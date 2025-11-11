@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Request, Form, UploadFile, File, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse, Response, JSONResponse
+from fastapi import APIRouter, Request, Form, UploadFile, File, Depends, HTTPException
+from fastapi.responses import HTMLResponse, RedirectResponse, Response, JSONResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 import json
 import os
+from pathlib import Path
 
 from ..services.article_service import ArticleService
 from ..services.article_file_loader import ArticleFileLoader
@@ -23,12 +24,52 @@ from ..services.auth_service import (
 )
 from ..schemas import UserRegister, UserLogin
 from ..db import SessionLocal
+from ..settings import settings as app_settings
 
 from babel.dates import format_date
+import re
 
 router = APIRouter()
 templates = Jinja2Templates(directory="backend/app/templates")
 templates.env.globals['format_date'] = format_date
+templates.env.globals['settings'] = app_settings
+
+LANDING_ASSETS_DIR = Path("backend/app/templates/landing_assets")
+
+
+def link_law_articles(text: str, request_obj: Request) -> str:
+    """
+    Преобразует упоминания статей закона в тексте в ссылки.
+    Например: "п.1 ч.2 ст.5 ФЗ о рекламе" -> ссылка на статью закона
+    """
+    if not text:
+        return text
+    
+    # Паттерн для поиска упоминаний статей: п.X ч.Y ст.Z или ч.Y ст.Z или ст.Z
+    # Примеры: "п.1 ч.2 ст.5 ФЗ о рекламе", "ч.2 ст.5 ФЗ о рекламе", "ст.5 ФЗ о рекламе"
+    pattern = r'(п\.\d+(?:\.\d+)?\s+)?(ч\.\d+(?:\.\d+)?\s+)?(ст\.\d+(?:\.\d+)?)\s+ФЗ\s+о\s+рекламе'
+    
+    def replace_match(match):
+        article_ref = match.group(0)
+        # Извлекаем номер статьи (ст.X)
+        article_match = re.search(r'ст\.(\d+(?:\.\d+)?)', article_ref)
+        if article_match:
+            article_number = article_match.group(1)
+            article_id = f"art-{article_number}"
+            # Генерируем ссылку через request.url_for
+            try:
+                link_url = request_obj.url_for('web_v2_law_article', article_id=article_id)
+            except:
+                link_url = f"/v2/laws/article/{article_id}"
+            return f'<a href="{link_url}" class="text-blue-600 hover:text-blue-800 underline">{article_ref}</a>'
+        return article_ref
+    
+    result = re.sub(pattern, replace_match, text)
+    return result
+
+
+# Регистрируем фильтр
+templates.env.filters['link_law_articles'] = link_law_articles
 
 
 # Dependency для получения сессии БД
@@ -52,8 +93,49 @@ def get_template_context(request: Request, db: Session, **kwargs):
 
 
 @router.get("/", name="web_root")
-async def index():
-    return RedirectResponse(url="/v2/articles", status_code=303)
+async def index(request: Request, db: Session = Depends(get_db)):
+    # Проверяем, залогинен ли пользователь
+    current_user = get_current_user_from_cookie(request, db)
+
+    if not current_user:
+        # Если не залогинен — показываем лендинг
+        return RedirectResponse(url="/landing", status_code=303)
+
+    # Если залогинен — отправляем на страницу проверки
+    return RedirectResponse(url="/v2/check", status_code=303)
+
+
+@router.get("/landing", name="landing")
+async def landing(request: Request, db: Session = Depends(get_db)):
+    return templates.TemplateResponse(
+        "pages/landing.html",
+        get_template_context(request, db)
+    )
+
+
+@router.get("/landing-assets/{filename}", name="web_landing_asset")
+async def landing_asset(filename: str):
+    safe_name = Path(filename).name
+    file_path = LANDING_ASSETS_DIR / safe_name
+
+    if not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Файл не найден")
+
+    return FileResponse(file_path)
+
+
+@router.get("/landing/example-report", name="web_landing_example_report")
+async def landing_example_report():
+    file_path = LANDING_ASSETS_DIR / "example_report.pdf"
+
+    if not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Файл не найден")
+
+    return FileResponse(
+        file_path,
+        media_type="application/pdf",
+        filename="example_report.pdf"
+    )
 
 
 @router.get("/v2/articles", response_class=HTMLResponse, name="web_v2_articles")
@@ -485,7 +567,7 @@ async def register_page(request: Request, db: Session = Depends(get_db)):
     from ..settings import settings
     return templates.TemplateResponse(
         "pages/register_v2.html",
-        get_template_context(request, db, recaptcha_site_key=settings.RECAPTCHA_SITE_KEY)
+        get_template_context(request, db, recaptcha_site_key=settings.RECAPTCHA_SITE_KEY, hide_header=True)
     )
 
 
@@ -528,15 +610,16 @@ async def register_submit(
         user_data = UserRegister(email=email, password=password)
         user = register_user(db, user_data)
 
-        # Создаем response с редиректом
-        response = RedirectResponse(url="/v2/auth/login?registered=1", status_code=303)
+        # Автоматически логиним пользователя после регистрации
+        response = RedirectResponse(url="/", status_code=303)
+        set_auth_cookie(response, user.id)
 
         return response
     except Exception as e:
         # В случае ошибки возвращаемся на страницу регистрации с сообщением
         return templates.TemplateResponse(
             "pages/register_v2.html",
-            get_template_context(request, db, error=str(e), recaptcha_site_key=settings.RECAPTCHA_SITE_KEY),
+            get_template_context(request, db, error=str(e), recaptcha_site_key=settings.RECAPTCHA_SITE_KEY, hide_header=True),
             status_code=400
         )
 
@@ -547,7 +630,7 @@ async def login_page(request: Request, registered: int = 0, db: Session = Depend
     success_message = "Регистрация успешна! Теперь можете войти." if registered else None
     return templates.TemplateResponse(
         "pages/login_v2.html",
-        get_template_context(request, db, success_message=success_message)
+        get_template_context(request, db, success_message=success_message, hide_header=True)
     )
 
 
@@ -564,7 +647,7 @@ async def login_submit(
     if not user:
         return templates.TemplateResponse(
             "pages/login_v2.html",
-            get_template_context(request, db, error="Неверный email или пароль"),
+            get_template_context(request, db, error="Неверный email или пароль", hide_header=True),
             status_code=401
         )
 

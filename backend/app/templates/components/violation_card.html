@@ -1,7 +1,13 @@
 {# expects: v dict with fields: title, text, fix, link, severity in ['critical','medium','low'], cases (optional) #}
 <article class="rounded-2xl border border-rose-400 bg-rose-50 px-5 py-4">
-    <h3 class="font-semibold mb-2">{{ v.title }}</h3>
-    <p class="text-sm text-neutral-700 mb-3">{{ v.text }}</p>
+    <h3 class="font-semibold mb-2">
+        {% if v.link %}
+            <a href="{{ v.link }}" class="text-rose-900 hover:text-rose-700 underline">{{ v.title }}</a>
+        {% else %}
+            {{ v.title }}
+        {% endif %}
+    </h3>
+    <p class="text-sm text-neutral-700 mb-3">{{ (v.text|link_law_articles(request))|safe }}</p>
     <div class="text-sm">
         <div class="font-medium mb-1">Рекомендация по исправлению</div>
         <p class="text-neutral-700">{{ v.fix }}</p>

@@ -3,7 +3,7 @@
     <div class="container mx-auto px-8 lg:px-10">
         <div class="flex items-center justify-between gap-4 py-3">
             <!-- Лого -->
-            <a href="{{ url_for('web_v2_articles') }}" class="flex items-center gap-2 shrink-0">
+            <a href="{{ url_for('web_v2_check') }}" class="flex items-center gap-2 shrink-0">
                 <div class="h-10 w-10 rounded-full bg-cyan-400 flex items-center justify-center text-white text-lg">📃
                 </div>
                 <span class="hidden sm:block font-semibold">РекВизор</span>
@@ -39,9 +39,11 @@
                                     Статистика
                                 </a>
                                 <div class="border-t border-neutral-200 my-1"></div>
-                                <a href="{{ url_for('web_v2_logout') }}" class="block px-4 py-2 text-sm text-red-600 hover:bg-neutral-50">
+                                <button type="button"
+                                        onclick="document.getElementById('logoutModalHeader').classList.remove('hidden')"
+                                        class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-neutral-50">
                                     Выйти
-                                </a>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -67,22 +69,52 @@
         <ul class="flex items-center justify-center h-12 gap-8 text-sm">
             <li>
                 <a href="{{ url_for('web_v2_articles') }}"
-                    class="inline-flex items-center h-full border-b-2 {{ 'border-cyan-500 text-cyan-600' if active=='articles' else 'border-transparent text-neutral-700 hover:text-neutral-900' }}">
+                    class="inline-flex items-center h-full border-b-2 {{ 'border-cyan-600 text-cyan-600' if active=='articles' else 'border-transparent text-neutral-700 hover:text-neutral-900' }}">
                     Полезные статьи
                 </a>
             </li>
             <li>
                 <a href="{{ url_for('web_v2_check') }}"
-                    class="inline-flex items-center h-full border-b-2 {{ 'border-cyan-500 text-cyan-600' if active=='check' else 'border-transparent text-neutral-700 hover:text-neutral-900' }}">
+                    class="inline-flex items-center h-full border-b-2 {{ 'border-cyan-600 text-cyan-600' if active=='check' else 'border-transparent text-neutral-700 hover:text-neutral-900' }}">
                     Проверка рекламы
                 </a>
             </li>
             <li>
                 <a href="{{ url_for('web_v2_laws') }}"
-                    class="inline-flex items-center h-full border-b-2 {{ 'border-cyan-500 text-cyan-600' if active=='laws' else 'border-transparent text-neutral-700 hover:text-neutral-900' }}">
+                    class="inline-flex items-center h-full border-b-2 {{ 'border-cyan-600 text-cyan-600' if active=='laws' else 'border-transparent text-neutral-700 hover:text-neutral-900' }}">
                     ФЗ «О рекламе»
                 </a>
             </li>
         </ul>
     </div>
 </nav>
+
+{# Модальное окно подтверждения выхода для header #}
+{% if current_user %}
+<div id="logoutModalHeader" 
+     class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+     onclick="if (event.target === this) this.classList.add('hidden')">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 transform transition-all" onclick="event.stopPropagation()">
+        <div class="p-6">
+            <div class="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-cyan-100">
+                <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-center text-neutral-900 mb-2">Выход из аккаунта</h3>
+            <p class="text-center text-neutral-600 mb-6">Точно хотите выйти из аккаунта?</p>
+            <div class="flex gap-3">
+                <button type="button"
+                        onclick="document.getElementById('logoutModalHeader').classList.add('hidden')"
+                        class="flex-1 px-4 py-2.5 rounded-lg border border-neutral-300 text-neutral-700 font-medium hover:bg-neutral-50 transition">
+                    Отмена
+                </button>
+                <a href="{{ url_for('web_v2_logout') }}"
+                   class="flex-1 px-4 py-2.5 rounded-lg bg-cyan-400 text-white font-medium hover:bg-cyan-600 transition text-center">
+                    Выйти
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}

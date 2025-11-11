@@ -85,8 +85,17 @@
                         {{ sub.used }} / {{ sub.quota_month }}
                     </div>
                     {% set remaining = sub.quota_month - sub.used %}
+                    {% set last_digit = remaining % 10 %}
+                    {% set last_two_digits = remaining % 100 %}
+                    {% if last_digit == 1 and last_two_digits != 11 %}
+                        {% set checks_word = 'проверка' %}
+                    {% elif last_digit in [2, 3, 4] and last_two_digits not in [12, 13, 14] %}
+                        {% set checks_word = 'проверки' %}
+                    {% else %}
+                        {% set checks_word = 'проверок' %}
+                    {% endif %}
                     <div class="mt-2 text-sm {{ 'text-red-600' if remaining < 10 else 'text-neutral-600' }}">
-                        Осталось: {{ remaining }} {{ 'проверок' if remaining != 1 else 'проверка' }}
+                        Осталось: {{ remaining }} {{ checks_word }}
                     </div>
                 </div>
                 
