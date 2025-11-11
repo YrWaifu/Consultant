@@ -606,6 +606,10 @@ async def register_submit(
                 if not result.get("success", False):
                     raise ValueError("Проверка reCAPTCHA не пройдена. Попробуйте еще раз.")
 
+        # Проверяем валидность email адреса
+        from ..services.email_validation_service import validate_email
+        await validate_email(email)
+
         # Регистрируем пользователя
         user_data = UserRegister(email=email, password=password)
         user = register_user(db, user_data)
@@ -615,11 +619,37 @@ async def register_submit(
         set_auth_cookie(response, user.id)
 
         return response
-    except Exception as e:
-        # В случае ошибки возвращаемся на страницу регистрации с сообщением
+    except HTTPException as e:
+        # Обрабатываем HTTPException (например, от валидации email)
+        error_message = e.detail if hasattr(e, 'detail') else str(e)
+        # Определяем, связана ли ошибка с email
+        is_email_error = "email" in error_message.lower() or "адрес" in error_message.lower()
         return templates.TemplateResponse(
             "pages/register_v2.html",
-            get_template_context(request, db, error=str(e), recaptcha_site_key=settings.RECAPTCHA_SITE_KEY, hide_header=True),
+            get_template_context(
+                request, db, 
+                error=error_message, 
+                email_value=email if is_email_error else "",
+                email_error=is_email_error,
+                recaptcha_site_key=settings.RECAPTCHA_SITE_KEY, 
+                hide_header=True
+            ),
+            status_code=400
+        )
+    except Exception as e:
+        # В случае другой ошибки возвращаемся на страницу регистрации с сообщением
+        error_message = str(e)
+        is_email_error = "email" in error_message.lower() or "адрес" in error_message.lower()
+        return templates.TemplateResponse(
+            "pages/register_v2.html",
+            get_template_context(
+                request, db, 
+                error=error_message, 
+                email_value=email if is_email_error else "",
+                email_error=is_email_error,
+                recaptcha_site_key=settings.RECAPTCHA_SITE_KEY, 
+                hide_header=True
+            ),
             status_code=400
         )
 
