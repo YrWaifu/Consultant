@@ -74,12 +74,12 @@
                 <span class="{{ 'text-neutral-800' if f.strong else 'text-neutral-700' }}">
                     {{ f.text }}
                 </span>
-                {% if 'Выявлено' in f.text and 'несоответств' in f.text %}
+                {% if ('Выявлено' in f.text and 'несоответств' in f.text) or ('Нет несоответствий' in f.text) %}
                     {% set violations_link = url_for('web_v2_article_detail', article_slug='perechen-narushenij') %}
                     <div class="mt-1">
                         <a href="{{ violations_link }}" class="text-blue-600 hover:text-blue-800 underline text-sm">Подробнее про несоответствия</a>
                     </div>
-                {% elif 'существующей судебной практике' in f.text and 'ответственности' in f.text %}
+                {% elif 'Есть риск привлечения к ответственности' in f.text or 'Риск привлечения к ответственности мал' in f.text %}
                     {% set responsibility_link = url_for('web_v2_article_detail', article_slug='otvetstvennost-za-reklamu') %}
                     <div class="mt-1">
                         <a href="{{ responsibility_link }}" class="text-blue-600 hover:text-blue-800 underline text-sm">Подробнее про ответственность</a>
@@ -92,7 +92,7 @@
 </div>
 
 {% if violations|length %}
-<h2 class="text-xl font-semibold mt-10 mb-4">Выявленные нарушения из Федерального закона «О рекламе»</h2>
+<h2 class="text-xl font-semibold mt-10 mb-4">Выявленные несоответствия из Федерального закона «О рекламе»</h2>
 <div class="space-y-5">
     {% for v in violations %}
     {% set violation_index = loop.index0 %}

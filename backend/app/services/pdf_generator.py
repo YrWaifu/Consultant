@@ -181,7 +181,7 @@ def generate_pdf_report(report_data: dict) -> bytes:
     # Нарушения (если есть)
     violations = report_data.get('violations', [])
     if violations:
-        story.append(Paragraph("Выявленные нарушения из Федерального закона «О рекламе»", heading_style))
+        story.append(Paragraph("Выявленные несоответствия из Федерального закона «О рекламе»", heading_style))
         
         for i, violation in enumerate(violations, 1):
             # Заголовок нарушения

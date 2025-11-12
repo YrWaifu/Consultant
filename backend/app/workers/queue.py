@@ -61,6 +61,12 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
             if "Части" in article_str and "и" in article_str:
                 return f"{article_str} ст.5 ФЗ о рекламе"
             
+            # Обрабатываем случай, когда в строке есть просто "ст. 5" или "ст.5" без "ФЗ О рекламе"
+            if re.search(r'ст\.\s*5\b', article_str, re.IGNORECASE) and 'ФЗ' not in article_str and 'о рекламе' not in article_str.lower():
+                # Заменяем "ст. 5" или "ст.5" на "ст. 5 ФЗ О рекламе"
+                result = re.sub(r'ст\.\s*5\b', 'ст. 5 ФЗ О рекламе', article_str, flags=re.IGNORECASE)
+                return result
+            
             # Если не удалось распарсить, возвращаем исходную строку
             return article_str
         
@@ -112,14 +118,14 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
         flags = (
             [
                 {"type": "ok", "text": "Нет несоответствий ФЗ «О рекламе»", "strong": True},
-                {"type": "ok", "text": "В соответствии с существующей судебной практикой риск привлечения к ответственности отсутствует", "strong": False},
                 {"type": "ok", "text": "Риск привлечения к ответственности мал", "strong": False},
+                {"type": "ok", "text": "В существующей судебной практике похожие случаи отсутствуют", "strong": False},
             ]
             if not has_violations
             else [
                 {"type": "warn", "text": violations_text, "strong": True},
-                {"type": "warn", "text": "В существующей судебной практике есть похожие случаи привлечения к ответственности", "strong": True},
                 {"type": "warn", "text": "Есть риск привлечения к ответственности", "strong": False},
+                {"type": "warn", "text": "В существующей судебной практике есть похожие случаи", "strong": True},
             ]
         )
 
@@ -130,15 +136,17 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
 
         print("🗃️ Получаем информацию о законе из БД...")
         # Получаем информацию о законе
+        from ..services.law_parser import fetch_law_name
         db = SessionLocal()
         repo = LawRepository(db)
         try:
             law_version = repo.get_active_version("38-FZ")
             if law_version:
-                law_name = law_version.law_name
+                # Используем fetch_law_name() для получения актуального названия, как на странице ФЗ
+                law_name = fetch_law_name()
                 law_version_date = law_version.version_date
             else:
-                law_name = "Федеральный закон \"О рекламе\" от 13.03.2006 N 38-ФЗ (последняя редакция)"
+                law_name = fetch_law_name()
                 law_version_date = date(2024, 10, 1)
         finally:
             db.close()
@@ -188,10 +196,15 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
                 violations_count = len(result.get('violations', []))
                 if result['is_ok']:
                     summary = "✅ Соответствует законодательству"
-                elif violations_count > 3:
-                    summary = f"⚠️ Обнаружено {violations_count} нарушений"
                 else:
-                    summary = f"⚠️ Обнаружено {violations_count} предупреждение(й)"
+                    # Правильное склонение слова "несоответствие"
+                    if violations_count % 10 == 1 and violations_count % 100 != 11:
+                        word = "несоответствие"
+                    elif violations_count % 10 in [2, 3, 4] and violations_count % 100 not in [12, 13, 14]:
+                        word = "несоответствия"
+                    else:
+                        word = "несоответствий"
+                    summary = f"⚠️ Обнаружено {violations_count} {word}"
 
                 # Сохраняем результат
                 check_repo.update_result(
