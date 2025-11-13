@@ -11,6 +11,20 @@ from reportlab.pdfbase.ttfonts import TTFont
 import os
 
 from backend.app.services.unreliability_text import UNRELIABILITY_TEXT
+import re
+
+
+def law_name_genitive(law_name: str) -> str:
+    """
+    Склоняет название закона в родительный падеж для использования с предлогом "из".
+    Заменяет "Федеральный закон" на "Федерального закона" в начале строки.
+    """
+    if not law_name:
+        return law_name
+    
+    # Заменяем "Федеральный закон" на "Федерального закона" в начале строки
+    result = re.sub(r'^Федеральный закон', 'Федерального закона', law_name, count=1)
+    return result
 
 
 def generate_pdf_report(report_data: dict) -> bytes:
@@ -181,7 +195,10 @@ def generate_pdf_report(report_data: dict) -> bytes:
     # Нарушения (если есть)
     violations = report_data.get('violations', [])
     if violations:
-        story.append(Paragraph("Выявленные нарушения из Федерального закона «О рекламе»", heading_style))
+        # Используем полное название закона из данных отчета и склоняем в родительный падеж
+        law_name = report_data.get('law_name', 'Федеральный закон N 38-ФЗ «О рекламе»')
+        law_name_gen = law_name_genitive(law_name)
+        story.append(Paragraph(f"Выявленные несоответствия из {law_name_gen}", heading_style))
         
         for i, violation in enumerate(violations, 1):
             # Заголовок нарушения
