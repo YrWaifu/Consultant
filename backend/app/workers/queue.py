@@ -41,7 +41,7 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
         cases: list[dict] = []
 
         def format_violation_title(article_str):
-            """Преобразует 'Часть X. Пункт Y' в 'п.Y ч.X ст.5 ФЗ N 38-ФЗ "О рекламе"'"""
+            """Преобразует 'Часть X. Пункт Y' в 'п.Y ч.X ст.5 ФЗ "О рекламе" N 38-ФЗ'"""
             import re
             
             # Парсим строку типа "Часть 5. Пункт 1"
@@ -49,22 +49,22 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
             if match:
                 part = match.group(1)
                 point = match.group(2)
-                return f"п.{point} ч.{part} ст.5 ФЗ N 38-ФЗ \"О рекламе\""
+                return f"п.{point} ч.{part} ст.5 ФЗ \"О рекламе\" N 38-ФЗ"
             
             # Парсим строки типа "Часть 6" (без пункта)
             match = re.match(r'Часть (\d+(?:\.\d+)?)$', article_str)
             if match:
                 part = match.group(1)
-                return f"ч.{part} ст.5 ФЗ N 38-ФЗ \"О рекламе\""
+                return f"ч.{part} ст.5 ФЗ \"О рекламе\" N 38-ФЗ"
             
             # Парсим строки типа "Части 10.1 и 10.2"
             if "Части" in article_str and "и" in article_str:
-                return f"{article_str} ст.5 ФЗ N 38-ФЗ \"О рекламе\""
+                return f"{article_str} ст.5 ФЗ \"О рекламе\" N 38-ФЗ"
             
             # Обрабатываем случай, когда в строке есть просто "ст. 5" или "ст.5" без "ФЗ"
             if re.search(r'ст\.\s*5\b', article_str, re.IGNORECASE) and 'ФЗ' not in article_str:
-                # Заменяем "ст. 5" или "ст.5" на "ст. 5 ФЗ N 38-ФЗ "О рекламе""
-                result = re.sub(r'ст\.\s*5\b', 'ст.5 ФЗ N 38-ФЗ "О рекламе"', article_str, flags=re.IGNORECASE)
+                # Заменяем "ст. 5" или "ст.5" на "ст. 5 ФЗ "О рекламе" N 38-ФЗ"
+                result = re.sub(r'ст\.\s*5\b', 'ст.5 ФЗ "О рекламе" N 38-ФЗ', article_str, flags=re.IGNORECASE)
                 return result
             
             # Если не удалось распарсить, возвращаем исходную строку
@@ -109,11 +109,11 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
         # Формируем текст с количеством нарушений
         violations_count = len(violations)
         if violations_count == 1:
-            violations_text = f"Выявлено {violations_count} несоответствие ФЗ «О рекламе»"
+            violations_text = f"Выявлено {violations_count} несоответствие ФЗ «О рекламе» N 38-ФЗ"
         elif 2 <= violations_count <= 4:
-            violations_text = f"Выявлено {violations_count} несоответствия ФЗ «О рекламе»"
+            violations_text = f"Выявлено {violations_count} несоответствия ФЗ «О рекламе» N 38-ФЗ"
         else:
-            violations_text = f"Выявлено {violations_count} несоответствий ФЗ «О рекламе»"
+            violations_text = f"Выявлено {violations_count} несоответствий ФЗ «О рекламе» N 38-ФЗ"
         
         flags = (
             [

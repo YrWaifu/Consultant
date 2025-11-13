@@ -7,6 +7,7 @@ import socket
 from typing import Tuple, Optional
 import httpx
 from fastapi import HTTPException
+import asyncio
 
 try:
     import dns.resolver
@@ -15,6 +16,9 @@ except ImportError:
     DNS_AVAILABLE = False
 
 from ..settings import settings
+
+# Кэш для результатов проверки доменов (TTL ~5 минут)
+_domain_cache = {}
 
 
 def _format_mailtrap_reason(reason: str, email: str) -> str:
@@ -46,44 +50,97 @@ def validate_email_syntax(email: str) -> bool:
     return bool(re.match(pattern, email))
 
 
-def validate_mx_record(domain: str) -> bool:
+async def validate_mx_record(domain: str) -> bool:
     """
-    Проверка наличия MX-записи для домена.
+    Быстрая проверка наличия MX-записи для домена.
+    Использует короткие таймауты и кэширование для ускорения.
     Возвращает True, если домен имеет MX-запись или A-запись (для fallback).
     """
+    # Проверяем кэш
+    if domain in _domain_cache:
+        return _domain_cache[domain]
+    
+    # Устанавливаем короткие таймауты для DNS (0.5 секунды вместо дефолтных 5-10)
     if DNS_AVAILABLE:
-        try:
-            # Сначала проверяем MX-записи
-            mx_records = dns.resolver.resolve(domain, 'MX')
-            if mx_records:
-                return True
-        except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.Timeout):
-            pass
-        except Exception:
-            # Если произошла ошибка, переходим к проверке A-записи
-            pass
+        resolver = dns.resolver.Resolver()
+        resolver.timeout = 0.5  # 500ms вместо дефолтных 5-10 секунд
+        resolver.lifetime = 0.5
         
-        # Если MX-записей нет, проверяем A-запись (некоторые почтовые серверы используют A-запись)
-        try:
-            a_records = dns.resolver.resolve(domain, 'A')
-            if a_records:
-                return True
-        except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.Timeout):
-            return False
-        except Exception:
-            # Fallback на socket
+        # Параллельно проверяем MX и A записи (оборачиваем синхронные DNS-запросы в executor)
+        loop = asyncio.get_event_loop()
+        
+        async def check_mx():
             try:
-                socket.gethostbyname(domain)
-                return True
-            except socket.gaierror:
+                mx_records = await loop.run_in_executor(
+                    None, 
+                    lambda: resolver.resolve(domain, 'MX', raise_on_no_answer=False)
+                )
+                return bool(mx_records)
+            except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.Timeout):
                 return False
-    else:
-        # Если dnspython недоступен, используем только socket
+            except Exception:
+                return False
+        
+        async def check_a():
+            try:
+                a_records = await loop.run_in_executor(
+                    None,
+                    lambda: resolver.resolve(domain, 'A', raise_on_no_answer=False)
+                )
+                return bool(a_records)
+            except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.Timeout):
+                return False
+            except Exception:
+                return False
+        
+        async def check_socket():
+            try:
+                # Используем socket с коротким таймаутом
+                def _check():
+                    old_timeout = socket.getdefaulttimeout()
+                    socket.setdefaulttimeout(0.5)
+                    try:
+                        socket.gethostbyname(domain)
+                        return True
+                    finally:
+                        socket.setdefaulttimeout(old_timeout)
+                return await loop.run_in_executor(None, _check)
+            except (socket.gaierror, socket.timeout, OSError):
+                return False
+        
+        # Выполняем проверки параллельно и берем первый успешный результат
         try:
-            socket.gethostbyname(domain)
-            return True
-        except socket.gaierror:
+            # Запускаем все проверки параллельно с общим таймаутом 0.8 секунды
+            results = await asyncio.wait_for(
+                asyncio.gather(
+                    check_mx(),
+                    check_a(),
+                    check_socket(),
+                    return_exceptions=True
+                ),
+                timeout=0.8
+            )
+            
+            # Если хотя бы одна проверка успешна - домен валиден
+            is_valid = any(r is True for r in results if not isinstance(r, Exception))
+            _domain_cache[domain] = is_valid
+            return is_valid
+        except asyncio.TimeoutError:
+            # При таймауте считаем домен невалидным
+            _domain_cache[domain] = False
             return False
+    else:
+        # Если dnspython недоступен, используем только socket с коротким таймаутом
+        try:
+            socket.setdefaulttimeout(0.5)
+            socket.gethostbyname(domain)
+            _domain_cache[domain] = True
+            return True
+        except (socket.gaierror, socket.timeout):
+            _domain_cache[domain] = False
+            return False
+        finally:
+            socket.setdefaulttimeout(None)
     
     return False
 
@@ -91,6 +148,7 @@ def validate_mx_record(domain: str) -> bool:
 async def validate_with_mailtrap(email: str) -> Tuple[bool, Optional[str]]:
     """
     Проверка email через Mailtrap Email Validation API.
+    Оптимизирована с коротким таймаутом.
     
     Returns:
         Tuple[bool, Optional[str]]: (is_valid, error_message)
@@ -99,7 +157,8 @@ async def validate_with_mailtrap(email: str) -> Tuple[bool, Optional[str]]:
         return None, "Mailtrap API токен не настроен"
     
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        # Уменьшаем таймаут с 10 до 2 секунд для ускорения
+        async with httpx.AsyncClient(timeout=2.0) as client:
             response = await client.get(
                 "https://mailtrap.io/api/v1/email_validation/check",
                 params={"email": email},
@@ -133,6 +192,7 @@ async def validate_with_mailtrap(email: str) -> Tuple[bool, Optional[str]]:
 async def validate_email_fallback(email: str) -> Tuple[bool, str]:
     """
     Фолбэк-проверка email: синтаксис + MX-запись.
+    Оптимизирована для быстрой работы.
     
     Returns:
         Tuple[bool, str]: (is_valid, error_message)
@@ -147,8 +207,8 @@ async def validate_email_fallback(email: str) -> Tuple[bool, str]:
     except IndexError:
         return False, "Пожалуйста, введите корректный email адрес. Пример: name@example.com"
     
-    # Проверка MX-записи
-    if not validate_mx_record(domain):
+    # Проверка MX-записи (теперь асинхронная)
+    if not await validate_mx_record(domain):
         return False, f"Похоже, что домен {domain} не существует или не принимает почту. Проверьте правильность написания email адреса."
     
     return True, ""
