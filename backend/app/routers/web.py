@@ -40,14 +40,18 @@ LANDING_ASSETS_DIR = Path("backend/app/templates/landing_assets")
 def link_law_articles(text: str, request_obj: Request) -> str:
     """
     Преобразует упоминания статей закона в тексте в ссылки.
-    Например: "п.1 ч.2 ст.5 ФЗ о рекламе" -> ссылка на статью закона
+    Например: "п.1 ч.2 ст.5 ФЗ N 38-ФЗ "О рекламе"" -> ссылка на статью закона
     """
     if not text:
         return text
     
     # Паттерн для поиска упоминаний статей: п.X ч.Y ст.Z или ч.Y ст.Z или ст.Z
-    # Примеры: "п.1 ч.2 ст.5 ФЗ о рекламе", "ч.2 ст.5 ФЗ о рекламе", "ст.5 ФЗ о рекламе"
-    pattern = r'(п\.\d+(?:\.\d+)?\s+)?(ч\.\d+(?:\.\d+)?\s+)?(ст\.\d+(?:\.\d+)?)\s+ФЗ\s+о\s+рекламе'
+    # Примеры: "п.1 ч.2 ст.5 ФЗ N 38-ФЗ "О рекламе"", "ч.2 ст.5 ФЗ N 38-ФЗ "О рекламе"", "ст.5 ФЗ N 38-ФЗ "О рекламе""
+    # Также поддерживаем старый формат "ФЗ о рекламе" для обратной совместимости
+    # Новый формат: ФЗ N 38-ФЗ "О рекламе" или ФЗ N 38-ФЗ О рекламе
+    pattern_new = r'(п\.\d+(?:\.\d+)?\s+)?(ч\.\d+(?:\.\d+)?\s+)?(ст\.\d+(?:\.\d+)?)\s+ФЗ\s+N\s+38-ФЗ\s+[""]?О\s+рекламе[""]?'
+    # Старый формат: ФЗ о рекламе
+    pattern_old = r'(п\.\d+(?:\.\d+)?\s+)?(ч\.\d+(?:\.\d+)?\s+)?(ст\.\d+(?:\.\d+)?)\s+ФЗ\s+о\s+рекламе'
     
     def replace_match(match):
         article_ref = match.group(0)
@@ -64,7 +68,9 @@ def link_law_articles(text: str, request_obj: Request) -> str:
             return f'<a href="{link_url}" class="text-blue-600 hover:text-blue-800 underline">{article_ref}</a>'
         return article_ref
     
-    result = re.sub(pattern, replace_match, text)
+    # Сначала обрабатываем новый формат, потом старый
+    result = re.sub(pattern_new, replace_match, text)
+    result = re.sub(pattern_old, replace_match, result)
     return result
 
 

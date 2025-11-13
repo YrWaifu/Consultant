@@ -41,7 +41,7 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
         cases: list[dict] = []
 
         def format_violation_title(article_str):
-            """Преобразует 'Часть X. Пункт Y' в 'п.Y ч.X ст.5 ФЗ о рекламе'"""
+            """Преобразует 'Часть X. Пункт Y' в 'п.Y ч.X ст.5 ФЗ N 38-ФЗ "О рекламе"'"""
             import re
             
             # Парсим строку типа "Часть 5. Пункт 1"
@@ -49,22 +49,22 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
             if match:
                 part = match.group(1)
                 point = match.group(2)
-                return f"п.{point} ч.{part} ст.5 ФЗ о рекламе"
+                return f"п.{point} ч.{part} ст.5 ФЗ N 38-ФЗ \"О рекламе\""
             
             # Парсим строки типа "Часть 6" (без пункта)
             match = re.match(r'Часть (\d+(?:\.\d+)?)$', article_str)
             if match:
                 part = match.group(1)
-                return f"ч.{part} ст.5 ФЗ о рекламе"
+                return f"ч.{part} ст.5 ФЗ N 38-ФЗ \"О рекламе\""
             
             # Парсим строки типа "Части 10.1 и 10.2"
             if "Части" in article_str and "и" in article_str:
-                return f"{article_str} ст.5 ФЗ о рекламе"
+                return f"{article_str} ст.5 ФЗ N 38-ФЗ \"О рекламе\""
             
-            # Обрабатываем случай, когда в строке есть просто "ст. 5" или "ст.5" без "ФЗ О рекламе"
-            if re.search(r'ст\.\s*5\b', article_str, re.IGNORECASE) and 'ФЗ' not in article_str and 'о рекламе' not in article_str.lower():
-                # Заменяем "ст. 5" или "ст.5" на "ст. 5 ФЗ О рекламе"
-                result = re.sub(r'ст\.\s*5\b', 'ст. 5 ФЗ О рекламе', article_str, flags=re.IGNORECASE)
+            # Обрабатываем случай, когда в строке есть просто "ст. 5" или "ст.5" без "ФЗ"
+            if re.search(r'ст\.\s*5\b', article_str, re.IGNORECASE) and 'ФЗ' not in article_str:
+                # Заменяем "ст. 5" или "ст.5" на "ст. 5 ФЗ N 38-ФЗ "О рекламе""
+                result = re.sub(r'ст\.\s*5\b', 'ст.5 ФЗ N 38-ФЗ "О рекламе"', article_str, flags=re.IGNORECASE)
                 return result
             
             # Если не удалось распарсить, возвращаем исходную строку
