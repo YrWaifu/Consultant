@@ -41,16 +41,23 @@ try:
     def markdownify(value: str) -> str:
         if not value:
             return ""
-        # Convert Markdown to HTML, preserving links and common formatting
-        return _markdown_lib.markdown(
+
+        # Конвертируем Markdown в HTML
+        html = _markdown_lib.markdown(
             value,
-            extensions=[
-                "extra",          # tables, fenced code blocks, etc.
-                "sane_lists",
-                "smarty",
-            ],
+            extensions=["extra", "sane_lists", "smarty"],
             output_format="html5",
         )
+
+        # Добавляем инлайн-стиль к каждой ссылке
+        html = re.sub(
+            r'(<a\b(?![^>]*\bstyle\b)[^>]*?)\b(href\s*=\s*["\']?)',
+            r'\1 style="color: #1e90ff;" \2',
+            html,
+            flags=re.IGNORECASE
+        )
+
+        return html
 
     templates.env.filters['markdownify'] = markdownify
 except Exception:
