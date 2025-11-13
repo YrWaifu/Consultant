@@ -34,6 +34,31 @@ templates = Jinja2Templates(directory="backend/app/templates")
 templates.env.globals['format_date'] = format_date
 templates.env.globals['settings'] = app_settings
 
+# Markdown filter
+try:
+    import markdown as _markdown_lib
+
+    def markdownify(value: str) -> str:
+        if not value:
+            return ""
+        # Convert Markdown to HTML, preserving links and common formatting
+        return _markdown_lib.markdown(
+            value,
+            extensions=[
+                "extra",          # tables, fenced code blocks, etc.
+                "sane_lists",
+                "smarty",
+            ],
+            output_format="html5",
+        )
+
+    templates.env.filters['markdownify'] = markdownify
+except Exception:
+    # If markdown is not available, pass-through (plain text)
+    def _noop(value: str) -> str:
+        return value or ""
+    templates.env.filters['markdownify'] = _noop
+
 LANDING_ASSETS_DIR = Path("backend/app/templates/landing_assets")
 
 

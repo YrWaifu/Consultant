@@ -42,10 +42,8 @@
         {% endif %}
 
         <div class="pcyan pcyan-neutral max-w-none">
-            <div class="space-y-4 text-neutral-800 leading-relaxed">
-                {% for paragraph in article.content.split('\n\n') %}
-                <p>{{ paragraph }}</p>
-                {% endfor %}
+            <div class="space-y-4 text-neutral-800 leading-relaxed article-content">
+                {{ article.content | markdownify | link_law_articles(request) | safe }}
             </div>
         </div>
     </article>

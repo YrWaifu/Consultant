@@ -18,6 +18,16 @@
   margin-bottom: 0.5rem;
 }
 
+.article-content a {
+  color: #0ea5e9;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.article-content a:hover {
+  color: #2563eb;
+}
+
 /* Подсветка найденного слова */
 mark.highlight-search {
   background-color: #fef08a;
