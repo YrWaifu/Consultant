@@ -34,6 +34,38 @@ templates = Jinja2Templates(directory="backend/app/templates")
 templates.env.globals['format_date'] = format_date
 templates.env.globals['settings'] = app_settings
 
+# Markdown filter
+try:
+    import markdown as _markdown_lib
+
+    def markdownify(value: str) -> str:
+        if not value:
+            return ""
+
+        # Конвертируем Markdown в HTML
+        html = _markdown_lib.markdown(
+            value,
+            extensions=["extra", "sane_lists", "smarty"],
+            output_format="html5",
+        )
+
+        # Добавляем инлайн-стиль к каждой ссылке
+        html = re.sub(
+            r'(<a\b(?![^>]*\bstyle\b)[^>]*?)\b(href\s*=\s*["\']?)',
+            r'\1 style="color: #1e90ff;" \2',
+            html,
+            flags=re.IGNORECASE
+        )
+
+        return html
+
+    templates.env.filters['markdownify'] = markdownify
+except Exception:
+    # If markdown is not available, pass-through (plain text)
+    def _noop(value: str) -> str:
+        return value or ""
+    templates.env.filters['markdownify'] = _noop
+
 LANDING_ASSETS_DIR = Path("backend/app/templates/landing_assets")
 
 
