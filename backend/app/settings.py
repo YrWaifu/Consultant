@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     RECAPTCHA_SITE_KEY: str = ""
     RECAPTCHA_SECRET_KEY: str = ""
     
+    # Mailtrap Email Validation API
+    MAILTRAP_API_TOKEN: str = ""
+    
     # Контактная информация для футера (читается из .env)
     SITE_NAME: str = "РекВизор"
     CONTACT_EMAIL: str | None = None
