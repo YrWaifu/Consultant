@@ -19,7 +19,7 @@ from ..repositories.law_repository import LawRepository
 # Константы
 LAW_BASE_URL = "https://www.consultant.ru/document/cons_doc_LAW_58968/"
 LAW_NAME_URL = "https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=502629&dst=1000000001&cacheid=4FB90E0190495F8EA6306FE02560E6E3&mode=splus&rnd=Fkqfx1VCH2OzPk481#misfx1V6LzxmMZJm2"
-LAW_NAME = "Федеральный закон \"О рекламе\" от 13.03.2006 N 38-ФЗ (последняя редакция)"
+LAW_NAME = "Федеральный закон \"О рекламе\" от 13.03.2006 N 38-ФЗ"
 LAW_CODE = "38-FZ"
 
 SESSION = requests.Session()

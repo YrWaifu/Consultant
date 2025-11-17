@@ -4,7 +4,7 @@ from ..repositories.law_repository import LawRepository
 from .law_parser import fetch_law_name
 
 LAW_TITLE = 'Федеральный закон «О рекламе»'
-LAW_META = 'от 13.03.2006 N 38-ФЗ (последняя редакция)'
+LAW_META = 'от 13.03.2006 N 38-ФЗ'
 LAW_CODE = "38-FZ"
 
 _TOC = [
