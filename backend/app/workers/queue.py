@@ -146,9 +146,11 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
             if law_version:
                 # Используем fetch_law_name() для получения актуального названия, как на странице ФЗ
                 law_name = fetch_law_name()
+                print(f"🏛️ Название закона получено из fetch_law_name(): '{law_name}'")
                 law_version_date = law_version.version_date
             else:
                 law_name = fetch_law_name()
+                print(f"🏛️ Название закона получено из fetch_law_name() (fallback): '{law_name}'")
                 law_version_date = date(2024, 10, 1)
         finally:
             db.close()
