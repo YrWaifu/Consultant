@@ -2,6 +2,15 @@
 
 Проверка рекламы на соответствие ФЗ «О рекламе» (38-ФЗ).
 
+**Пересобрать на сервере**
+
+```bash
+docker compose down
+docker builder prune -a -f 
+docker compose build --no-cache api
+docker compose up -d
+```
+
 **Стек**: FastAPI, PostgreSQL, Redis, RQ, Alembic, Tailwind CSS
 
 ---

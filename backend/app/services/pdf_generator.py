@@ -196,7 +196,7 @@ def generate_pdf_report(report_data: dict) -> bytes:
     violations = report_data.get('violations', [])
     if violations:
         # Используем полное название закона из данных отчета и склоняем в родительный падеж
-        law_name = report_data.get('law_name', 'Федеральный закон N 38-ФЗ «О рекламе»')
+        law_name = report_data.get('law_name', 'Федеральный закон «О рекламе» от 13.03.2006 N 38-ФЗ')
         law_name_gen = law_name_genitive(law_name)
         story.append(Paragraph(f"Выявленные несоответствия из {law_name_gen}", heading_style))
         

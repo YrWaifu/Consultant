@@ -388,6 +388,19 @@ def fetch_law_name() -> str:
             match = re.search(r'^(.+?)\s*\(с\s+изм\.\s+и\s+доп\.', full_name)
             if match:
                 result = match.group(1).strip()
+                
+                # ИСПРАВЛЯЕМ ПОРЯДОК: перемещаем название закона к началу
+                # Ищем паттерн: "Федеральный закон от XX.XX.XXXX N XX-ФЗ «О рекламе»"
+                # И меняем на: "Федеральный закон «О рекламе» от XX.XX.XXXX N XX-ФЗ"
+                fixed_name = re.sub(
+                    r'^(Федеральный закон)\s+(от\s+[\d.]+\s+N\s+[\d-]+ФЗ)\s+([«""]О\s+рекламе[»""])',
+                    r'\1 \3 \2',
+                    result
+                )
+                if fixed_name != result:
+                    print(f"✅ Исправлен порядок названия: {fixed_name}")
+                    return fixed_name
+                
                 print(f"✅ Название закона получено: {result}")
                 return result
             # Если не нашли такую скобку, возвращаем как есть
