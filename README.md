@@ -7,7 +7,7 @@
 ```bash
 docker compose down
 docker builder prune -a -f 
-docker compose build --no-cache api
+docker compose build --no-cache
 docker compose up -d
 ```
 

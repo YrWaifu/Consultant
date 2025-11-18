@@ -390,25 +390,33 @@ def fetch_law_name() -> str:
                 result = match.group(1).strip()
                 
                 # ИСПРАВЛЯЕМ ПОРЯДОК: перемещаем название закона к началу
+                print(f"🔍 Отладка regex. Исходная строка: '{result}'")
+                print(f"🔍 Длина строки: {len(result)}")
+                print(f"🔍 Символы в кавычках: {[c for c in result if c in '«»\"\"\'']}")
+                
                 # Ищем паттерны:
                 # 1. "Федеральный закон от XX.XX.XXXX N XX-ФЗ (ред. от XX.XX.XXXX) «О рекламе»"
                 # 2. "Федеральный закон от XX.XX.XXXX N XX-ФЗ «О рекламе»"
                 # И меняем на: "Федеральный закон «О рекламе» от XX.XX.XXXX N XX-ФЗ (ред. от XX.XX.XXXX)"
                 
                 # Сначала пробуем паттерн с редакцией
-                fixed_name = re.sub(
-                    r'^(Федеральный закон)\s+(от\s+[\d.]+\s+N\s+[\d-]+ФЗ)\s*(\(ред\.\s+от\s+[\d.]+\))\s+([«""]О\s+рекламе[»""])',
-                    r'\1 \4 \2 \3',
-                    result
-                )
+                pattern1 = r'^(Федеральный закон)\s+(от\s+[\d.]+\s+N\s+[\d-]+ФЗ)\s*(\(ред\.\s+от\s+[\d.]+\))\s+([«""]О\s+рекламе[»""])'
+                match1 = re.search(pattern1, result)
+                print(f"🔍 Паттерн 1 (с редакцией): {'НАЙДЕН' if match1 else 'НЕ НАЙДЕН'}")
+                if match1:
+                    print(f"🔍 Группы: {match1.groups()}")
+                
+                fixed_name = re.sub(pattern1, r'\1 \4 \2 \3', result)
                 
                 # Если не сработало, пробуем без редакции
                 if fixed_name == result:
-                    fixed_name = re.sub(
-                        r'^(Федеральный закон)\s+(от\s+[\d.]+\s+N\s+[\d-]+ФЗ)\s+([«""]О\s+рекламе[»""])',
-                        r'\1 \3 \2',
-                        result
-                    )
+                    pattern2 = r'^(Федеральный закон)\s+(от\s+[\d.]+\s+N\s+[\d-]+ФЗ)\s+([«""]О\s+рекламе[»""])'
+                    match2 = re.search(pattern2, result)
+                    print(f"🔍 Паттерн 2 (без редакции): {'НАЙДЕН' if match2 else 'НЕ НАЙДЕН'}")
+                    if match2:
+                        print(f"🔍 Группы: {match2.groups()}")
+                    
+                    fixed_name = re.sub(pattern2, r'\1 \3 \2', result)
                 if fixed_name != result:
                     print(f"✅ Исправлен порядок названия: {fixed_name}")
                     return fixed_name
