@@ -21,7 +21,7 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Node.js зависимости и сборка CSS
-COPY package.json package-lock.json* ./
+COPY package.json ./
 RUN npm install
 
 COPY tailwind.config.js ./
