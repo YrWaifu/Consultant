@@ -7,14 +7,14 @@ WORKDIR /app
 
 # Системные зависимости и шрифты с поддержкой кириллицы
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential gcc curl \
+    build-essential gcc curl xz-utils \
     fontconfig fonts-dejavu fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
-# Установка Node.js
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
+# Установка Node.js через официальные бинарники
+RUN curl -fsSL https://nodejs.org/dist/v18.19.0/node-v18.19.0-linux-x64.tar.xz | tar -xJ -C /usr/local --strip-components=1 \
+    && ln -s /usr/local/bin/node /usr/bin/node \
+    && ln -s /usr/local/bin/npm /usr/bin/npm
 
 # Python зависимости
 COPY requirements.txt .
