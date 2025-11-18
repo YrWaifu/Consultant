@@ -22,7 +22,7 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Node.js зависимости и сборка CSS
 COPY package.json ./
-RUN npm install
+RUN npm cache clean --force && npm install
 
 COPY tailwind.config.js ./
 COPY backend/app/static/css/app.css ./backend/app/static/css/app.css
