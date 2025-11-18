@@ -5,21 +5,35 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Системные зависимости и шрифты с поддержкой кириллицы
+# Системные зависимости, Node.js и шрифты с поддержкой кириллицы
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential gcc curl \
     fontconfig fonts-dejavu fonts-liberation \
+    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# Зависимости
+# Python зависимости
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Код
+# Node.js зависимости и сборка CSS
+COPY package.json package-lock.json* ./
+RUN npm install
+
+COPY tailwind.config.js ./
+COPY backend/app/static/css/app.css ./backend/app/static/css/app.css
+COPY backend/app/templates/ ./backend/app/templates/
+
+# Копируем остальные файлы бэкенда
 COPY backend/ backend/
 COPY ml/ ml/
 COPY alembic.ini .
 COPY manage.py .
+
+# Сборка CSS (после копирования всех файлов)
+RUN npm run tw:build
+
 COPY docker/entrypoint.sh /entrypoint.sh
 # Убедиться, что скрипт без CRLF и исполняемый
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
