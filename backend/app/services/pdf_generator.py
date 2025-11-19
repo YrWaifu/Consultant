@@ -11,6 +11,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 import os
 
 from backend.app.services.unreliability_text import UNRELIABILITY_TEXT
+from backend.app.utils.timezone import moscow_now
 import re
 
 
@@ -293,7 +294,7 @@ def generate_pdf_report(report_data: dict) -> bytes:
     )
 
     story.append(Paragraph("Результаты проверки носят рекомендательный характер", footer_style))
-    story.append(Paragraph(f"Отчет сгенерирован: {datetime.now().strftime('%d.%m.%Y в %H:%M')}", footer_style))
+    story.append(Paragraph(f"Отчет сгенерирован: {moscow_now().strftime('%d.%m.%Y в %H:%M')}", footer_style))
     
     # Примечание
     if report_data.get('footer_note'):

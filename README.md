@@ -19,7 +19,7 @@ docker compose up -d
 
 ```bash
 # Установка
-npm install
+npm install 
 cp .env.example .env
 
 # Запуск (миграции применяются автоматически)

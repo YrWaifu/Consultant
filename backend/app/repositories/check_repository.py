@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from ..models import Check
+from ..utils.timezone import moscow_now
 
 
 class CheckRepository:
@@ -25,7 +26,7 @@ class CheckRepository:
             input_text=input_text,
             input_media_path=input_media_path,
             status=status,
-            created_at=datetime.utcnow()
+            created_at=moscow_now().replace(tzinfo=None)
         )
         
         self.db.add(check)
@@ -116,7 +117,7 @@ class CheckRepository:
         """Получить количество проверок по дням за последние N дней"""
         from datetime import datetime, timedelta
         
-        end_date = datetime.utcnow()
+        end_date = moscow_now().replace(tzinfo=None)
         start_date = end_date - timedelta(days=days - 1)
         
         checks = self.db.query(Check).filter(

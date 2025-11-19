@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from ..models import User, Subscription
 from ..repositories import UserRepository, SubscriptionRepository
+from ..utils.timezone import moscow_now, format_moscow_short
 
 
 class Account(BaseModel):
@@ -81,7 +82,7 @@ def get_subscription(user_id: int, db: Session) -> dict | None:
         return None
     
     # Форматируем дату истечения
-    days_left = (subscription.expires_at - datetime.utcnow()).days
+    days_left = (subscription.expires_at - moscow_now().replace(tzinfo=None)).days
     
     return {
         "status": subscription.status,
@@ -89,7 +90,7 @@ def get_subscription(user_id: int, db: Session) -> dict | None:
         "plan_code": subscription.plan,  # оригинальный код плана для условий в шаблонах
         "price": "Бесплатно" if subscription.plan == "trial" else "990 ₽/мес",
         "renews_at": subscription.expires_at.isoformat(),
-        "expires_at_formatted": subscription.expires_at.strftime("%d.%m.%Y"),
+        "expires_at_formatted": format_moscow_short(subscription.expires_at),
         "days_left": days_left,
         "quota_month": subscription.checks_quota,
         "used": subscription.checks_used,
