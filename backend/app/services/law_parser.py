@@ -19,7 +19,7 @@ from ..repositories.law_repository import LawRepository
 # Константы
 LAW_BASE_URL = "https://www.consultant.ru/document/cons_doc_LAW_58968/"
 LAW_NAME_URL = "https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=502629&dst=1000000001&cacheid=4FB90E0190495F8EA6306FE02560E6E3&mode=splus&rnd=Fkqfx1VCH2OzPk481#misfx1V6LzxmMZJm2"
-LAW_NAME = "Федеральный закон \"О рекламе\" от 13.03.2006 N 38-ФЗ"
+LAW_NAME = "Федеральный закон от 13.03.2006 N 38-ФЗ \"О рекламе\""
 LAW_CODE = "38-FZ"
 
 SESSION = requests.Session()
@@ -384,48 +384,13 @@ def fetch_law_name() -> str:
             # Убираем " - КонсультантПлюс" в конце, если есть
             full_name = re.sub(r'\s*-\s*КонсультантПлюс\s*$', '', full_name, flags=re.IGNORECASE)
             
-            # Обрезаем до скобки "(с изм. и доп., вступ. в силу с..."
-            match = re.search(r'^(.+?)\s*\(с\s+изм\.\s+и\s+доп\.', full_name)
-            if match:
-                result = match.group(1).strip()
-                
-                # ИСПРАВЛЯЕМ ПОРЯДОК: перемещаем название закона к началу
-                print(f"🔍 Отладка regex. Исходная строка: '{result}'")
-                print(f"🔍 Длина строки: {len(result)}")
-                print(f"🔍 Символы в кавычках: {[c for c in result if c in '«»\"\"\'']}")
-                
-                # Ищем паттерны:
-                # 1. "Федеральный закон от XX.XX.XXXX N XX-ФЗ (ред. от XX.XX.XXXX) «О рекламе»"
-                # 2. "Федеральный закон от XX.XX.XXXX N XX-ФЗ «О рекламе»"
-                # И меняем на: "Федеральный закон «О рекламе» от XX.XX.XXXX N XX-ФЗ (ред. от XX.XX.XXXX)"
-                
-                # Сначала пробуем паттерн с редакцией
-                pattern1 = r'^(Федеральный закон)\s+(от\s+[\d.]+\s+N\s+[\d-]+ФЗ)\s*(\(ред\.\s+от\s+[\d.]+\))\s+([«""]О\s+рекламе[»""])'
-                match1 = re.search(pattern1, result)
-                print(f"🔍 Паттерн 1 (с редакцией): {'НАЙДЕН' if match1 else 'НЕ НАЙДЕН'}")
-                if match1:
-                    print(f"🔍 Группы: {match1.groups()}")
-                
-                fixed_name = re.sub(pattern1, r'\1 \4 \2 \3', result)
-                
-                # Если не сработало, пробуем без редакции
-                if fixed_name == result:
-                    pattern2 = r'^(Федеральный закон)\s+(от\s+[\d.]+\s+N\s+[\d-]+ФЗ)\s+([«""]О\s+рекламе[»""])'
-                    match2 = re.search(pattern2, result)
-                    print(f"🔍 Паттерн 2 (без редакции): {'НАЙДЕН' if match2 else 'НЕ НАЙДЕН'}")
-                    if match2:
-                        print(f"🔍 Группы: {match2.groups()}")
-                    
-                    fixed_name = re.sub(pattern2, r'\1 \3 \2', result)
-                if fixed_name != result:
-                    print(f"✅ Исправлен порядок названия: {fixed_name}")
-                    return fixed_name
-                
-                print(f"✅ Название закона получено: {result}")
-                return result
-            # Если не нашли такую скобку, возвращаем как есть
-            print(f"✅ Название закона получено: {full_name}")
-            return full_name
+            # Убираем ТОЛЬКО последнюю скобку "(с изм. и доп., вступ. в силу с...)"
+            # Оставляем все остальное, включая "(ред. от...)" 
+            result = re.sub(r'\s*\(с\s+изм\.\s+и\s+доп\..*?\)$', '', full_name)
+            result = result.strip()
+            
+            print(f"✅ Название закона получено: {result}")
+            return result
         
         print(f"⚠️ Название закона не найдено в <title> или <meta property=\"og:title\">")
         print(f"⚠️ Использую fallback название: {LAW_NAME}")
@@ -446,7 +411,7 @@ def extract_law_metadata(html: str) -> Dict:
     law_name = fetch_law_name()
     law_date = date(2006, 3, 13)  # default
     
-    # Извлекаем дату из названия: "Федеральный закон "О рекламе" от 13.03.2006 N 38-ФЗ"
+    # Извлекаем дату из названия: "Федеральный закон от 13.03.2006 N 38-ФЗ (ред. от 31.07.2025) "О рекламе""
     date_match = re.search(r'от\s+(\d{2}\.\d{2}\.\d{4})', law_name)
     if date_match:
         try:

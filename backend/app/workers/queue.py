@@ -20,7 +20,7 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
         from ..services.ml_core import run_ml
         from ..repositories.law_repository import LawRepository  
         from ..db import SessionLocal
-        from datetime import datetime, date, timezone, timedelta
+        from datetime import datetime, date
         
         print("📚 Запускаем ML обработку...")
         # Запускаем ML обработку
@@ -132,9 +132,7 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
         ring_color = "#ef4444" if has_violations else "#22c55e"
         ring_deg = 360.0
         ring_label = "Нет" if has_violations else "Да" 
-        # Московское время (UTC+3)
-        moscow_tz = timezone(timedelta(hours=3))
-        check_date = datetime.now(moscow_tz)
+        check_date = datetime.now()
 
         print("🗃️ Получаем информацию о законе из БД...")
         # Получаем информацию о законе
@@ -146,11 +144,9 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
             if law_version:
                 # Используем fetch_law_name() для получения актуального названия, как на странице ФЗ
                 law_name = fetch_law_name()
-                print(f"🏛️ Название закона получено из fetch_law_name(): '{law_name}'")
                 law_version_date = law_version.version_date
             else:
                 law_name = fetch_law_name()
-                print(f"🏛️ Название закона получено из fetch_law_name() (fallback): '{law_name}'")
                 law_version_date = date(2024, 10, 1)
         finally:
             db.close()
