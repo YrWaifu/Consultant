@@ -42,7 +42,9 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
         cases: list[dict] = []
 
         def format_violation_title(article_str):
-            """Преобразует 'Часть X. Пункт Y' в 'п.Y ч.X ст.5 ФЗ "О рекламе" N 38-ФЗ'"""
+            """Преобразует 'Часть X. Пункт Y' в 'п.Y ч.X ст.5 ФЗ "О рекламе" N 38-ФЗ'.
+            Также возвращает (formatted_title, point, part) для формирования ссылок.
+            """
             import re
 
             # Парсим строку типа "Часть 5. Пункт 1"
@@ -69,6 +71,7 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
                 return result, '', ''
             
             # Если не удалось распарсить, возвращаем исходную строку
+            # По умолчанию считаем п.1 ч.2 ст.5, чтобы не ломать ссылки на авторские материалы
             return article_str, '2', '1'
         
         for item in ml_out.get("text", []) or []:
@@ -105,7 +108,10 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
                     "title": formatted_title,
                     "text": info.get("text") or "",
                     "fix": info.get("recommendations") or "",
+                    # Ссылка на авторскую статью
                     "link": link,
+                    # Отдельное поле — ссылка на статью закона (ФЗ "О рекламе")
+                    "law_link": f"/v2/laws/article/{law_article_id}",
                     "cases": violation_cases,  # Добавляем случаи в нарушение
                 })
 

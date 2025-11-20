@@ -1,7 +1,10 @@
 {# expects: v dict with fields: title, text, fix, link, severity in ['critical','medium','low'], cases (optional) #}
 <article class="rounded-2xl border border-rose-400 bg-rose-50 px-5 py-4">
     <h3 class="font-semibold mb-2">
-        {% if v.link %}
+        {# Заголовок ведет на статью закона (ФЗ). Если law_link нет, используем старое поле link как fallback. #}
+        {% if v.law_link %}
+            <a href="{{ v.law_link }}" class="text-rose-900 hover:text-rose-700 underline">{{ v.title }}</a>
+        {% elif v.link %}
             <a href="{{ v.link }}" class="text-rose-900 hover:text-rose-700 underline">{{ v.title }}</a>
         {% else %}
             {{ v.title }}
@@ -12,7 +15,6 @@
         <div class="font-medium mb-1">Рекомендация по исправлению</div>
         <p class="text-neutral-700">{{ v.fix }}</p>
     </div>
-    {# Скрываем отдельную ссылку на авторские материалы в результате проверки рекламы #}
     {% if v.link %}
     <div class="mt-3 text-right">
         <a href="{{ v.link }}" target="_blank" rel="noopener" class="text-sm underline text-rose-600">Авторские материалы →</a>
