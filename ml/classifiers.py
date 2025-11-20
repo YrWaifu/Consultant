@@ -2,7 +2,7 @@ import os
 import json
 import re
 import requests
-from huggingface_hub import InferenceClient
+from ollama import Client
 from collections import defaultdict
 
 from ml.dictionaries import *
@@ -36,25 +36,23 @@ def get_questions_answers(ad_text: str) -> list:
     :return: list вида [{"номер вопроса": "...", "ответ": "ДА/НЕТ", "рекомендация": "..."}]
     """
 
-    client = InferenceClient(
-        token=os.environ["HF_TOKEN"],
-        provider='novita'
+    client = Client(
+        host='https://ollama.com',
+        headers={'Authorization': 'Bearer ' + os.environ.get('OLLAMA_TOKEN')}
     )
 
-    # Отправка запроса
-    response = client.chat.completions.create(
-        model=os.environ["MODEL_TEXT"],
-        messages=[
-            {
-                "role": "user",
-                "content": form_prompt(ad_text)
-            }
-        ],
-    )
+    messages = [
+        {
+            'role': 'user',
+            'content': form_prompt(ad_text),
+        },
+    ]
+
+    response = ''.join([part.message.content for part in client.chat(os.environ.get('MODEL_TEXT'), messages=messages,
+                                                                     stream=True)])
 
     # Очистка ответа
-    json_answers = response.choices[0].message.content
-    json_answers = re.sub(r"^```json\s*|\s*```$", "", json_answers.strip())
+    json_answers = re.sub(r"^```json\s*|\s*```$", "", response.strip())
 
     # Преобразование в list
     try:
