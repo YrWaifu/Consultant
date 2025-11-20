@@ -44,37 +44,37 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
         def format_violation_title(article_str):
             """Преобразует 'Часть X. Пункт Y' в 'п.Y ч.X ст.5 ФЗ "О рекламе" N 38-ФЗ'"""
             import re
-            
+
             # Парсим строку типа "Часть 5. Пункт 1"
             match = re.match(r'Часть (\d+(?:\.\d+)?)\. Пункт (\d+)', article_str)
             if match:
                 part = match.group(1)
                 point = match.group(2)
-                return f"п.{point} ч.{part} ст.5 ФЗ \"О рекламе\" N 38-ФЗ"
+                return f"п.{point} ч.{part} ст.5 ФЗ \"О рекламе\" N 38-ФЗ", point, part
             
             # Парсим строки типа "Часть 6" (без пункта)
             match = re.match(r'Часть (\d+(?:\.\d+)?)$', article_str)
             if match:
                 part = match.group(1)
-                return f"ч.{part} ст.5 ФЗ \"О рекламе\" N 38-ФЗ"
+                return f"ч.{part} ст.5 ФЗ \"О рекламе\" N 38-ФЗ", '', part
             
             # Парсим строки типа "Части 10.1 и 10.2"
             if "Части" in article_str and "и" in article_str:
-                return f"{article_str} ст.5 ФЗ \"О рекламе\" N 38-ФЗ"
+                return f"{article_str} ст.5 ФЗ \"О рекламе\" N 38-ФЗ", '', '10.1-10.2'
             
             # Обрабатываем случай, когда в строке есть просто "ст. 5" или "ст.5" без "ФЗ"
             if re.search(r'ст\.\s*5\b', article_str, re.IGNORECASE) and 'ФЗ' not in article_str:
                 # Заменяем "ст. 5" или "ст.5" на "ст. 5 ФЗ "О рекламе" N 38-ФЗ"
                 result = re.sub(r'ст\.\s*5\b', 'ст.5 ФЗ "О рекламе" N 38-ФЗ', article_str, flags=re.IGNORECASE)
-                return result
+                return result, '', ''
             
             # Если не удалось распарсить, возвращаем исходную строку
-            return article_str
+            return article_str, '2', '1'
         
         for item in ml_out.get("text", []) or []:
             for article, info in item.items():
                 law_article_id = "art-5"
-                formatted_title = format_violation_title(str(article))
+                formatted_title, point, part = format_violation_title(str(article))
                 
                 # Собираем случаи для этого нарушения
                 violation_cases = []
@@ -91,13 +91,21 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
                         "text": case_text,
                         "fix": info.get("recommendations") or "",
                     })
-                
+
+                link = f"/v2/articles/question-part-{part}-point-{point}"
+                if part == '6':
+                    link = f"/v2/articles/question-part-{part}"
+                elif part == '10.8':
+                    link = f"/v2/articles/question-part-10-8"
+                elif (point == "" and part == "") or part == 'Части 10.1 и 10.2' or part == 'Часть 7.1':
+                    link = f"/v2/articles/category/violations-explained"
+
                 violations.append({
                     "severity": "critical",
                     "title": formatted_title,
                     "text": info.get("text") or "",
                     "fix": info.get("recommendations") or "",
-                    "link": f"/v2/laws/article/{law_article_id}",
+                    "link": link,
                     "cases": violation_cases,  # Добавляем случаи в нарушение
                 })
 

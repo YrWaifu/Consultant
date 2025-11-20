@@ -15,7 +15,7 @@ class ArticleService:
         
         # Получаем статьи для каждой категории (по 4 для первой, по 3 для остальных)
         blocks = []
-        for i, category in enumerate(categories[:3]):  # Только первые 3 категории
+        for i, category in enumerate(categories):
             articles = self.repository.get_articles_by_category(category.slug, limit=3)
             
             blocks.append({

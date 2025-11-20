@@ -88,11 +88,18 @@ class ArticleFileLoader:
                 "sort_order": 2
             },
             {
+                "name": "О нарушениях",
+                "slug": "violations-explained",
+                "description": "Подробные объяснения всех нарушений",
+                "icon": "✒️",
+                "sort_order": 3
+            },
+            {
                 "name": "Интересные кейсы",
                 "slug": "interesting-cases",
                 "description": "Анализ реальных случаев нарушений",
                 "icon": "💡",
-                "sort_order": 3
+                "sort_order": 4
             }
         ]
         
