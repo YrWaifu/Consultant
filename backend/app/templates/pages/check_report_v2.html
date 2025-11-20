@@ -49,6 +49,12 @@
                 <span class="text-rose-600 font-semibold">Реклама не соответствует законодательству на дату проверки {{ check_date_short }}</span>
             {% endif %}
         </div>
+        {% set unreliability_link = url_for('web_v2_article_detail', article_slug='nedostovernaya-reklama') %}
+        <div class="mt-3 pt-3 border-t border-blue-200 text-sm text-blue-900">
+            Так как ИИ‑модель сервиса не проверяет рекламу на недостоверность (обман), рекомендуем дополнительно самостоятельно
+            оценить объявление на предмет недостоверности. Подробнее — 
+            <a href="{{ unreliability_link }}" class="text-blue-700 hover:text-blue-900 underline">в статье о недостоверной рекламе</a>.
+        </div>
     </div>
 </div>
 
