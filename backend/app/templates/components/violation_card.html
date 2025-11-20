@@ -12,11 +12,12 @@
         <div class="font-medium mb-1">Рекомендация по исправлению</div>
         <p class="text-neutral-700">{{ v.fix }}</p>
     </div>
-    {% if v.link %}
+    {# Скрываем отдельную ссылку на авторские материалы в результате проверки рекламы #}
+    {# {% if v.link %}
     <div class="mt-3 text-right">
         <a href="{{ v.link }}" target="_blank" rel="noopener" class="text-sm underline text-rose-600">Авторские материалы →</a>
     </div>
-    {% endif %}
+    {% endif %} #}
     
     {% if v.cases and v.cases|length %}
     <div class="mt-5 pt-5 border-t border-rose-300">
