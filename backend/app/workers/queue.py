@@ -21,6 +21,7 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
         from ..repositories.law_repository import LawRepository  
         from ..db import SessionLocal
         from datetime import datetime, date
+        from ..utils.timezone import moscow_now
         
         print("📚 Запускаем ML обработку...")
         # Запускаем ML обработку
@@ -132,7 +133,7 @@ def process_ad_check_task(text: str | None, audio_bytes: bytes | None, audio_con
         ring_color = "#ef4444" if has_violations else "#22c55e"
         ring_deg = 360.0
         ring_label = "Нет" if has_violations else "Да" 
-        check_date = datetime.now()
+        check_date = moscow_now()
 
         print("🗃️ Получаем информацию о законе из БД...")
         # Получаем информацию о законе

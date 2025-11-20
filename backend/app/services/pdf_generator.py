@@ -11,6 +11,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 import os
 
 from backend.app.services.unreliability_text import UNRELIABILITY_TEXT
+from backend.app.utils.timezone import moscow_now
 import re
 
 
@@ -196,7 +197,7 @@ def generate_pdf_report(report_data: dict) -> bytes:
     violations = report_data.get('violations', [])
     if violations:
         # Используем полное название закона из данных отчета и склоняем в родительный падеж
-        law_name = report_data.get('law_name', 'Федеральный закон N 38-ФЗ «О рекламе»')
+        law_name = report_data.get('law_name', 'Федеральный закон от 13.03.2006 N 38-ФЗ (ред. от 31.07.2025) "О рекламе"')
         law_name_gen = law_name_genitive(law_name)
         story.append(Paragraph(f"Выявленные несоответствия из {law_name_gen}", heading_style))
         
@@ -293,7 +294,7 @@ def generate_pdf_report(report_data: dict) -> bytes:
     )
 
     story.append(Paragraph("Результаты проверки носят рекомендательный характер", footer_style))
-    story.append(Paragraph(f"Отчет сгенерирован: {datetime.now().strftime('%d.%m.%Y в %H:%M')}", footer_style))
+    story.append(Paragraph(f"Отчет сгенерирован: {moscow_now().strftime('%d.%m.%Y в %H:%M')}", footer_style))
     
     # Примечание
     if report_data.get('footer_note'):

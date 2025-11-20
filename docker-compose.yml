@@ -7,11 +7,14 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./:/app:delegated
     command: ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/"]
       interval: 10s
@@ -28,13 +31,24 @@ services:
       api:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       db:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - ./:/app:delegated
     command: >
-      sh -c "python -m backend.app.workers.worker"
+      sh -c "while true; do 
+        echo '🚀 Запуск воркера...' && 
+        python -m backend.app.workers.worker || 
+        (echo '💥 Воркер упал, перезапуск через 5 секунд...' && sleep 5)
+      done"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import redis; r=redis.Redis(host='redis', port=6379); r.ping(); print('✅ Воркер здоров')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   db:
     image: postgres:15
@@ -42,15 +56,38 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: adlaw
+      # Настройки для стабильности
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d adlaw"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    # Настройки производительности
+    shm_size: 256mb
 
   redis:
     image: redis:7
     ports:
       - "6379:6379"
+    restart: unless-stopped
+    # Конфигурация для стабильности
+    command: redis-server --appendonly yes --save 20 1 --loglevel notice --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
 
 volumes:
   pgdata:
+  redisdata:

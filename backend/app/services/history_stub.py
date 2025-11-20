@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 from sqlalchemy.orm import Session
 from ..repositories import CheckRepository
+from ..utils.timezone import format_moscow_date
 
 
 def list_history(user_id: Optional[int] = None, db: Optional[Session] = None) -> List[Dict]:
@@ -31,7 +32,7 @@ def list_history(user_id: Optional[int] = None, db: Optional[Session] = None) ->
         
         result.append({
             "id": check.id,
-            "date": check.created_at.strftime("%d.%m.%Y %H:%M"),
+            "date": format_moscow_date(check.created_at),
             "title": check.input_text[:50] + "..." if check.input_text and len(check.input_text) > 50 else check.input_text or "Проверка",
             "summary": check.summary or "Результаты проверки",
             "badge_text": badge_text,

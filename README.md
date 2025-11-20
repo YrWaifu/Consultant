@@ -2,6 +2,30 @@
 
 Проверка рекламы на соответствие ФЗ «О рекламе» (38-ФЗ).
 
+## 🚀 Быстрый деплой на сервере
+
+**Обычное обновление** (сохраняет данные):
+```bash
+docker compose down && docker compose up -d --build
+```
+
+**Полная пересборка** (если что-то сломалось):
+```bash
+docker compose down
+docker builder prune -a -f 
+docker compose build --no-cache
+docker compose up -d
+```
+
+**Мониторинг системы**:
+```bash
+./monitor.sh  # Показывает статус всех сервисов
+```
+
+✅ **Автовосстановление**: Воркеры и сервисы автоматически перезапускаются при сбоях  
+✅ **Health Checks**: Система сама следит за здоровьем компонентов  
+✅ **Сохранение данных**: Вся информация в защищенных Docker volumes  
+
 **Стек**: FastAPI, PostgreSQL, Redis, RQ, Alembic, Tailwind CSS
 
 ---
@@ -10,7 +34,7 @@
 
 ```bash
 # Установка
-npm install
+npm install 
 cp .env.example .env
 
 # Запуск (миграции применяются автоматически)
