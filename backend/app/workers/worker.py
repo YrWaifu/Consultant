@@ -1,4 +1,6 @@
 from rq import Worker
+from redis.exceptions import ReadOnlyError, RedisError
+
 from .queue import redis  # это экземпляр Redis с твоего REDIS_URL
 from .scheduler import setup_daily_tasks
 from ..services.law_parser import parse_and_save_law
@@ -9,7 +11,29 @@ from ..models import Article, ArticleCategory
 
 if __name__ == "__main__":
     print("🔧 Настройка планировщика задач...")
-    setup_daily_tasks()
+    # Если Redis read-only или scheduler по какой-то причине не может
+    # записаться в Redis, мы НЕ роняем воркер, а просто пропускаем
+    # настройку периодических задач.
+    try:
+        setup_daily_tasks()
+    except ReadOnlyError as e:
+        print(
+            "⚠️ Redis в режиме read-only при настройке планировщика. "
+            "Scheduler будет пропущен, воркер продолжит работу. "
+            f"Детали: {e}"
+        )
+    except RedisError as e:
+        print(
+            "⚠️ Ошибка Redis при настройке планировщика. "
+            "Scheduler будет пропущен, воркер продолжит работу. "
+            f"Детали: {e}"
+        )
+    except Exception as e:
+        print(
+            "⚠️ Не удалось настроить планировщик (нефатальная ошибка). "
+            "Воркер продолжит работу без расписания. "
+            f"Детали: {e}"
+        )
     
     # Проверяем, есть ли данные в БД, если нет - добавляем задачу парсинга в очередь
     print("🔍 Проверка наличия закона в БД...")
