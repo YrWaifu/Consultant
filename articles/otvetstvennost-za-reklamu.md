@@ -47,10 +47,10 @@ sort_order: 2
 
 *Источники:*
 
-[Федеральный закон от 13.03.2006 N 38-ФЗ (ред. от 31.07.2025) "О рекламе"](/v2/laws/)
+[Федеральный закон от 13.03.2006 N 38-ФЗ "О рекламе"](/v2/laws/)
 
-[Уголовный кодекс Российской Федерации" от 13.06.1996 N 63-ФЗ (ред. от 31.07.2025)](https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=516744)
+[Уголовный кодекс Российской Федерации" от 13.06.1996 N 63-ФЗ](https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=516744)
 
-[Кодекс Российской Федерации об административных правонарушениях" от 30.12.2001 N 195-ФЗ (ред. от 31.07.2025)](https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=518138)
+[Кодекс Российской Федерации об административных правонарушениях" от 30.12.2001 N 195-ФЗ](https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=518138)
 
-[Гражданский кодекс Российской Федерации (часть вторая)" от 26.01.1996 N 14-ФЗ (ред. от 24.06.2025)](https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=508506)
+[Гражданский кодекс Российской Федерации (часть вторая)" от 26.01.1996 N 14-ФЗ](https://www.consultant.ru/cons/cgi/online.cgi?req=doc&base=LAW&n=508506)
